@@ -6,7 +6,7 @@ sudo apt-get install libbluetooth-dev
 ### Python packages
 - [pybluez](https://github.com/pybluez/pybluez)
 - [pexpect](https://github.com/pexpect/pexpect) (used by the bluetoothctl command)
-
+- inquirer
 
 ### Pairing and connections
 https://askubuntu.com/questions/1112259/easier-way-to-connect-to-bluetooth-device
