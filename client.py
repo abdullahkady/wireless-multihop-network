@@ -3,17 +3,6 @@ import bluetooth
 import inquirer
 import json
 
-def send_to_display(target_display_name, data):
-    nearby_devices = bluetooth.discover_devices(lookup_names=True)
-    target_mac = None
-    for mac, display in nearby_devices:
-        if display == answers["device"]:
-            target_mac = mac
-            break
-    if target_mac is None:
-        raise Exception('NOT FOUND')
-    send_to(target_mac)
-
 def send_to(target_mac, data):
     print('Connecting to {}'.format(target_mac))
     connector = Bluetoothctl()
@@ -27,6 +16,17 @@ def send_to(target_mac, data):
     socket.send(json.dumps(data))
     print('Sent data successfully')
     socket.close()
+
+def send_to_display(target_display_name, data):
+    nearby_devices = bluetooth.discover_devices(lookup_names=True)
+    target_mac = None
+    for mac, display in nearby_devices:
+        if display == target_display_name:
+            target_mac = mac
+            break
+    if target_mac is None:
+        raise Exception('NOT FOUND')
+    send_to(target_mac)
 
 
 def choose_user_to_connect():
@@ -45,7 +45,7 @@ def choose_user_to_connect():
 
 
 def initiate_client():
-    all_devices = ['mustafagoudah-Lenovo-Z51-70', 'eark']
+    all_devices = ['mustafagoudah-Lenovo-Z51-70', 'Eark']
     questions = [
         inquirer.List('device',
             message="Choose target device to send to",
