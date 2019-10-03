@@ -26,7 +26,7 @@ def send_to_display(target_display_name, data):
             break
     if target_mac is None:
         raise Exception('NOT FOUND')
-    send_to(target_mac)
+    send_to(target_mac, data)
 
 
 def choose_user_to_connect():
