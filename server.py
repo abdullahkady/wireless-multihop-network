@@ -1,7 +1,9 @@
 import bluetooth
 import json
+import pexpect
 
-from client import send_to_display
+from bluetooth_connector import Bluetoothctl, BluetoothctlError
+from client import connector, send_to_display
 
 def start_server():
 
@@ -20,19 +22,34 @@ def start_server():
         else:
             forward_message(data)
 
-    server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    port = 1
-    server_sock.bind(("", port))
-    server_sock.listen(1)
     print('Server started')
 
+    # forward_message({
+    #     'receiver': 'Inspiron-7559',
+    #     'sender': 'SENDER',
+    #     'message': 'test'
+    # })
+
     while True:
+        server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+        port = 1
+        server_sock.bind(("", port))
+        server_sock.listen(1)
         client_sock, address = server_sock.accept()
         print('Accepted connection from {}'.format(address))
-        data = json.loads(str(client_sock.recv(1024)))
-        handle_message(data)
+        data = client_sock.recv(1024).decode('utf-8')
 
-    client_sock.close()
-    server_sock.close()
+        data = json.loads(data)
+        print(address[0])
+
+        client_sock.close()
+        server_sock.close()
+
+        try:
+            connector.disconnect(address[0])
+        except pexpect.exceptions.TIMEOUT:
+            pass
+
+        handle_message(data)
 
 start_server()

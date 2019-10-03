@@ -3,9 +3,10 @@ import bluetooth
 import inquirer
 import json
 
+connector = Bluetoothctl()
+
 def send_to(target_mac, data):
     print('Connecting to {}'.format(target_mac))
-    connector = Bluetoothctl()
     connector.connect(target_mac)
     port = 1
 
@@ -20,7 +21,9 @@ def send_to(target_mac, data):
 def send_to_display(target_display_name, data):
     nearby_devices = bluetooth.discover_devices(lookup_names=True)
     target_mac = None
+    print(nearby_devices)
     for mac, display in nearby_devices:
+        print(display)
         if display == target_display_name:
             target_mac = mac
             break
