@@ -38,7 +38,7 @@ def choose_user_to_connect():
             choices=[x for _, x in nearby_devices],
         ),
     ]
-    answers = inquirer.prompt(questions)['device']
+    answers = inquirer.prompt(questions)
     for mac, display in nearby_devices:
         if display == answers["device"]:
             return mac
@@ -60,7 +60,7 @@ def initiate_client():
         'receiver': actual_target,
         'message': raw_input('Enter message to send')
     }
-    send_to(immediate_target, data)
+    send_to(immediate_target, payload)
 
 if __name__ == '__main__':
     initiate_client()
