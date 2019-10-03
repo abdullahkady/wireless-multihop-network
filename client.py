@@ -58,7 +58,7 @@ def initiate_client():
     payload = {
         'sender': 'SENDER',
         'receiver': actual_target,
-        'message': raw_input('Enter message to send')
+        'message': input('Enter message to send')
     }
     send_to(immediate_target, payload)
 
