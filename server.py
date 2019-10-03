@@ -29,7 +29,7 @@ def start_server():
     while True:
         client_sock, address = server_sock.accept()
         print('Accepted connection from {}'.format(address))
-        data = json.loads(client_sock.recv(1024))
+        data = json.loads(str(client_sock.recv(1024)))
         handle_message(data)
 
     client_sock.close()

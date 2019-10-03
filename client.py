@@ -45,7 +45,7 @@ def choose_user_to_connect():
 
 
 def initiate_client():
-    all_devices = ['mustafagoudah-Lenovo-Z51-70', 'Eark']
+    all_devices = ['mustafagoudah-Lenovo-Z51-70', 'Eark', 'Inspiron-7559']
     questions = [
         inquirer.List('device',
             message="Choose target device to send to",
