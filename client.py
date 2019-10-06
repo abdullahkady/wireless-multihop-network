@@ -3,6 +3,7 @@ import inquirer
 
 from base import BaseSender, ConsoleLogger
 from bluetooth_connector import Bluetoothctl
+import settings
 
 
 class ConsoleInputCapturer:
@@ -68,12 +69,7 @@ if __name__ == '__main__':
     # Either a list of strings (display names, causing the forwarder to scan and match the name to mac)
     # or, provide a list of tuples (MAC, DISPLAY) such that it skips the discovery and sends right away
 
-    available_devices = [
-        ('AC:2B:6E:04:DE:08', 'Inspiron-7559'),
-        ('9C:B6:D0:16:5F:5C', 'Eark'),
-        ('00:1A:7D:DA:71:13', 'm3eeza'),
-        ('34:E6:AD:F1:CA:D3', 'mustafagoudah-Lenovo-Z51-70')
-    ]
+    available_devices = settings.AVAILABLE_DEVICES
     # available_devices = ['Inspiron-7559', 'Eark', 'm3eeza', 'mustafagoudah-Lenovo-Z51-70',]
     if isinstance(available_devices[0], tuple):
         # If the input list contains the MAC, map them to nested tuple (required by inquirer) as (display, value)
