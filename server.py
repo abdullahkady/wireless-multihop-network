@@ -37,7 +37,7 @@ class Server(BaseSender):
         # TODO: Use immediate/actual destination ?
         destination = data['destination']
         destination_mac = self._parse_destination_mac_address(destination)
-        if destination is None:
+        if destination_mac is None:
             raise Exception('Device not found!')
 
         # Override the destination with a '*', to inform the receiver to consume the message, rather than forward it
