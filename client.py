@@ -76,5 +76,4 @@ if __name__ == '__main__':
         available_devices = [(d, (m, d)) for m, d in available_devices]
 
     client = Client(available_devices=available_devices)
-    print(client.input_capturer.get_final_destination(client.available_devices))
-    # client.start()
+    client.start()
