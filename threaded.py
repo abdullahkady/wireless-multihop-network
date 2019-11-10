@@ -1,50 +1,87 @@
-import bluetooth
+import json
 import threading
+import bluetooth
 
-client_sockets = {}
-my_display_name = "Nav"
+CLIENT_SOCKETS = {}
+DISPLAY_NAME = 'Nav'
+
+# TODO: Investigate if 2 devices will have 2 channels, we
+# need to skip connecting the client if server connected
+
 
 def start_client():
-    service_matches = bluetooth.find_service( name = "NetworksTest" )
+    service_matches = bluetooth.find_service(name="NetworksTest")
 
     if len(service_matches) == 0:
-        print("Couldn't find the SampleServer service =(")
+        print("start_client: Couldn't find the SampleServer service =(")
     else:
         for service in service_matches:
             port = service["port"]
-            name = service["name"]
             host = service["host"]
             display_name = service["description"]
 
-            print("Connecting to \"%s\"" % (display_name,))
+            print("start_client: Connecting to \"%s\"" % (display_name,))
 
             # Create the client socket
-            sock = BluetoothSocket(bluetooth.RFCOMM )
-            sock.connect((host, port))
+            if display_name in CLIENT_SOCKETS:
+                socket = CLIENT_SOCKETS[display_name]
+            else:
+                socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
+                socket.connect((host, port))
+                CLIENT_SOCKETS[display_name] = socket
+                socket.send(DISPLAY_NAME)
 
-            print("Connected.")
-            sock.send(my_display_name)
+            print("start_client: Connected.")
+            socket.send(TOPOLOGY)
 
-            client_sockets[display_name] = sock
+# ============================================================================= #
 
-def start_server():
+
+TOPOLOGY = set()
+
+
+def handle_data(raw_msg):
+    # Parse JSON
+    # Build topology
+    # {
+    #     'source': 'DISPLAY_NAME',
+    #     'data': [['EDGES']]
+    # }
+    raw_msg = json.loads(raw_msg)
+    TOPOLOGY.add([set(edge) for edge in raw_msg['data']])
+
+
+def server_socket_worker(client_socket):
+    while True:
+        data = client_socket.recv(1024)
+        handle_data(data)
+        # TODO: Respond with topology ?
+
+
+def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-    server_sock.bind(("", 1))
-    server_sock.listen(1)
+    server_sock.bind(("", port))
+    server_sock.listen(port)
 
-    port = 1
-    bluetooth.advertise_service(server_sock, "NetworksTest", description=my_display_name)
+    bluetooth.advertise_service(server_sock, "NetworksTest", description=DISPLAY_NAME)
 
-    print("Waiting for connections on RFCOMM channel %d" % port)
+    print("start_server: Waiting for connections on RFCOMM channel %d" % port)
 
     while True:
-        client_sock, client_info = server_sock.accept()
-        print("Accepted connection from ", client_info)
-        name = client_sock.recv(1024)
-        client_sockets[name] = client_socket
+        client_socket, client_info = server_sock.accept()
+        print("start_server: Accepted connection from ", client_info)
+        name = client_socket.recv(1024)  # First message will be the display name
+        CLIENT_SOCKETS[name] = client_socket
+        threading.Thread(target=server_socket_worker, args=[client_socket]).start()
+
 
 if __name__ == "__main__":
-    start_client()
-    x = threading.Thread(target=start_server)
+    # TODO: Periodically discover?
+    x = threading.Thread(target=start_server, args=(1, ))
     x.start()
-    x.join()
+    # x.join()
+
+    import time
+    while True:
+        time.sleep(15)
+        start_client()
