@@ -3,7 +3,7 @@ import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = None
+DISPLAY_NAME = 'Kady'
 assert (DISPLAY_NAME is not None)
 
 # TODO: Investigate if 2 devices will have 2 channels, we
@@ -45,7 +45,7 @@ def start_client():
                 'source': DISPLAY_NAME,
                 'data': serialize_topology()
             }
-            socket.send(data)
+            socket.send(json.dumps(data))
 
 # ============================================================================= #
 
