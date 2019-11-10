@@ -3,7 +3,8 @@ import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = 'Nav'
+DISPLAY_NAME = None
+assert (DISPLAY_NAME is not None)
 
 # TODO: Investigate if 2 devices will have 2 channels, we
 # need to skip connecting the client if server connected
@@ -40,7 +41,11 @@ def start_client():
                 socket.send(DISPLAY_NAME)
 
             print("start_client: Connected.")
-            socket.send(serialize_topology())
+            data = {
+                'source': DISPLAY_NAME,
+                'data': serialize_topology()
+            }
+            socket.send(data)
 
 # ============================================================================= #
 
@@ -56,6 +61,7 @@ def handle_data(raw_msg):
     #     'data': [['EDGES']]
     # }
     raw_msg = json.loads(raw_msg.decode('utf-8'))
+    print(raw_msg)
     for edge in raw_msg['data']:
         TOPOLOGY.add(frozenset(edge))
 
