@@ -13,9 +13,8 @@ assert (DISPLAY_NAME is not None)
 def serialize_topology():
     # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
     # Convert them back into 2d lists
-    serializeable_set = [[i for i in edge] for edge in TOPOLOGY]
     # serializeable_set = [[1,2], [2,3]]
-    return json.dumps(serializeable_set)
+    return [[i for i in edge] for edge in TOPOLOGY]
 
 
 def start_client():
