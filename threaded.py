@@ -21,7 +21,7 @@ def start_client():
     service_matches = bluetooth.find_service(name="NetworksTest")
 
     if len(service_matches) == 0:
-        print("start_client: Couldn't find the SampleServer service =(")
+        print("start_client: Couldn't find the NetworksTest service =(")
     else:
         for service in service_matches:
             port = service["port"]
@@ -47,6 +47,8 @@ def start_client():
             }
             print('start_client: Sending: ', data)
             socket.send(json.dumps(data))
+            # Wait for the topology reply
+            update_topology(socket.recv(1024))
 
 # ============================================================================= #
 
@@ -54,7 +56,7 @@ def start_client():
 TOPOLOGY = set()
 
 
-def handle_data(raw_msg):
+def update_topology(raw_msg):
     # Parse JSON
     # Build topology
     # {
@@ -70,8 +72,14 @@ def handle_data(raw_msg):
 def server_socket_worker(client_socket):
     while True:
         data = client_socket.recv(1024)
-        handle_data(data)
-        # TODO: Respond with topology ?
+        update_topology(data)
+        data = {
+            'source': DISPLAY_NAME,
+            'data': serialize_topology()
+        }
+        # Reply back with the topology
+        print('server_socket_worker: Sending: ', data)
+        client_socket.send(json.dumps(data))
 
 
 def start_server(port):
@@ -99,5 +107,5 @@ if __name__ == "__main__":
 
     import time
     while True:
-        time.sleep(15)
+        time.sleep(10)
         start_client()
