@@ -3,7 +3,7 @@ import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = None
+DISPLAY_NAME = "Nav"
 assert (DISPLAY_NAME is not None)
 
 # TODO: Investigate if 2 devices will have 2 channels, we
@@ -38,7 +38,11 @@ def start_client():
                 socket.connect((host, port))
                 CLIENT_SOCKETS[display_name] = socket
                 TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
-                socket.send(DISPLAY_NAME)
+
+                try:
+                    socket.send(DISPLAY_NAME)
+                except Exception as e:
+                    del CLIENT_SOCKETS[DISPLAY_NAME]
 
             print("start_client: Connected.")
             data = {
@@ -46,9 +50,13 @@ def start_client():
                 'data': serialize_topology()
             }
             print('start_client: Sending: ', data)
-            socket.send(json.dumps(data))
-            # Wait for the topology reply
-            update_topology(socket.recv(1024))
+
+            try:
+                socket.send(json.dumps(data))
+                # Wait for the topology reply
+                update_topology(socket.recv(1024))
+            except Exception as e:
+                del CLIENT_SOCKETS[DISPLAY_NAME]
 
 # ============================================================================= #
 
@@ -69,7 +77,7 @@ def update_topology(raw_msg):
         TOPOLOGY.add(frozenset(edge))
 
 
-def server_socket_worker(client_socket):
+def server_socket_worker(client_socket, name):
     while True:
         data = client_socket.recv(1024)
         update_topology(data)
@@ -79,7 +87,12 @@ def server_socket_worker(client_socket):
         }
         # Reply back with the topology
         print('server_socket_worker: Sending: ', data)
-        client_socket.send(json.dumps(data))
+
+        try:
+            client_socket.send(json.dumps(data))
+        except Exception as e:
+            del CLIENT_SOCKETS[name]
+            break
 
 
 def start_server(port):
@@ -96,7 +109,7 @@ def start_server(port):
         print("start_server: Accepted connection from ", client_info)
         name = client_socket.recv(1024)  # First message will be the display name
         CLIENT_SOCKETS[name] = client_socket
-        threading.Thread(target=server_socket_worker, args=[client_socket]).start()
+        threading.Thread(target=server_socket_worker, args=[client_socket, name]).start()
 
 
 if __name__ == "__main__":
