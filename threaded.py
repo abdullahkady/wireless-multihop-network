@@ -55,7 +55,7 @@ def handle_data(raw_msg):
     #     'source': 'DISPLAY_NAME',
     #     'data': [['EDGES']]
     # }
-    raw_msg = json.loads(raw_msg)
+    raw_msg = json.loads(raw_msg.decode('utf-8'))
     for edge in raw_msg['data']:
         TOPOLOGY.add(frozenset(edge))
 
