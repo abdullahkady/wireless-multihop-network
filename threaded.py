@@ -9,6 +9,14 @@ DISPLAY_NAME = 'Nav'
 # need to skip connecting the client if server connected
 
 
+def serialize_topology():
+    # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
+    # Convert them back into 2d lists
+    serializeable_set = [[i for i in edge] for edge in TOPOLOGY]
+    # serializeable_set = [[1,2], [2,3]]
+    return json.dumps(serializeable_set)
+
+
 def start_client():
     service_matches = bluetooth.find_service(name="NetworksTest")
 
@@ -32,7 +40,7 @@ def start_client():
                 socket.send(DISPLAY_NAME)
 
             print("start_client: Connected.")
-            socket.send(TOPOLOGY)
+            socket.send(serialize_topology())
 
 # ============================================================================= #
 
@@ -48,7 +56,8 @@ def handle_data(raw_msg):
     #     'data': [['EDGES']]
     # }
     raw_msg = json.loads(raw_msg)
-    TOPOLOGY.add([set(edge) for edge in raw_msg['data']])
+    for edge in raw_msg['data']:
+        TOPOLOGY.add(frozenset(edge))
 
 
 def server_socket_worker(client_socket):
