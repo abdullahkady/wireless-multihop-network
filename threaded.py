@@ -43,7 +43,7 @@ def start_client():
                 try:
                     socket.send(DISPLAY_NAME)
                 except Exception as e:
-                    del CLIENT_SOCKETS[DISPLAY_NAME]
+                    del CLIENT_SOCKETS[display_name]
                     continue
 
             print("start_client: Connected.")
@@ -59,7 +59,7 @@ def start_client():
                 # Wait for the topology reply
                 update_topology(socket.recv(1024))
             except Exception as e:
-                del CLIENT_SOCKETS[DISPLAY_NAME]
+                del CLIENT_SOCKETS[display_name]
 
 # ============================================================================= #
 
