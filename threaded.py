@@ -113,6 +113,8 @@ def update_topology(raw_msg):
     print(TOPOLOGY)
 
 def socket_worker(client_socket, name):
+    global TOPOLOGY
+
     while True:
         print("Socket worker running")
 
