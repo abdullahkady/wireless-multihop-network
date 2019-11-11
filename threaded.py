@@ -1,6 +1,7 @@
 import json
 import os
 import threading
+import time
 import bluetooth
 
 TOPOLOGY = set()
@@ -139,6 +140,8 @@ def socket_worker(client_socket, name):
             print(e)
             continue
 
+        time.sleep(5)
+
 def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     server_sock.bind(("", port))
@@ -173,7 +176,6 @@ if __name__ == "__main__":
     x.start()
     # x.join()
 
-    import time
     while True:
-        time.sleep(10)
+        time.sleep(5)
         start_client()
