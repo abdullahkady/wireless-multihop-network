@@ -129,6 +129,11 @@ def socket_worker(client_socket, name):
         except Exception as e:
             print("DISCONNECTION")
             del CLIENT_SOCKETS[name]
+            new_topology = TOPOLOGY.copy()
+            for edge in TOPOLOGY:
+                if edge == frozenset(DISPLAY_NAME, display_name):
+                    new_topology.remove(edge)
+            TOPOLOGY = new_topology.copy()
             break
 
         try:
