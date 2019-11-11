@@ -63,7 +63,30 @@ def start_client():
 
 TOPOLOGY = set()
 
+def bfs(edge_list, source_node):
+    # s = set()
+    # s.add(frozenset(["Mo","kady"]))
+    # s.add(frozenset(["Mo","Nav"]))
+    # s.add(frozenset(["Nav","Goudah"]))
+    # s.add(frozenset(["Goudah","Amr"]))
 
+    queue = []
+    visited = []
+    queue.append(source_node)
+    visited.append(source_node)
+    while not len(queue) == 0:
+        u = queue.pop(0)
+        for x, y in edge_list:
+            if x == u:
+                if not y in visited:
+                    queue.append(y)
+                    visited.append(y)
+            if y == u:
+                if not x in visited:
+                    queue.append(x)
+                    visited.append(x)
+    return visited
+    
 def update_topology(raw_msg):
     # Parse JSON
     # Build topology
@@ -72,10 +95,24 @@ def update_topology(raw_msg):
     #     'data': [['EDGES']]
     # }
     raw_msg = json.loads(raw_msg.decode('utf-8'))
+    source = raw_msg['source']
     print(raw_msg)
+    incoming_topology = set()
+
     for edge in raw_msg['data']:
+        incoming_topology.add(frozenset(edge))
         TOPOLOGY.add(frozenset(edge))
 
+    for edge in TOPOLOGY:
+        x, y = edge
+        if x | y == source and not edge in incoming_topology:
+            TOPOLOGY.discard(edge)
+
+    reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
+    for edge in TOPOLOGY:
+        x, y = edge
+        if not x | y in reachable_nodes:
+            TOPOLOGY.discard(edge)
 
 def server_socket_worker(client_socket, name):
     while True:
