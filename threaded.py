@@ -109,7 +109,7 @@ def update_topology(raw_msg):
             new_topology.add(edge)
     TOPOLOGY = new_topology.copy()
 
-    print("UPDATED TOPOLOGY")
+    print("UPDATED TOPOLOGY FROM another node")
     print(TOPOLOGY)
 
 def socket_worker(client_socket, name):
@@ -132,10 +132,12 @@ def socket_worker(client_socket, name):
             print("DISCONNECTION")
             del CLIENT_SOCKETS[name]
             new_topology = TOPOLOGY.copy()
+            print('Old Toplogy: ', TOPOLOGY)
             for edge in TOPOLOGY:
                 if edge == frozenset([DISPLAY_NAME, name]):
                     new_topology.remove(edge)
             TOPOLOGY = new_topology.copy()
+            print('New Toplogy: ', TOPOLOGY)
             break
 
         try:
