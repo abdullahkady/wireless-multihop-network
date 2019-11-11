@@ -3,7 +3,7 @@ import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = "Nav"
+DISPLAY_NAME = "Mo"
 assert (DISPLAY_NAME is not None)
 
 def serialize_topology():
@@ -100,6 +100,8 @@ def update_topology(raw_msg):
     #     'source': 'DISPLAY_NAME',
     #     'data': [['EDGES']]
     # }
+    global TOPOLOGY
+    
     raw_msg = json.loads(raw_msg.decode('utf-8'))
     source = raw_msg['source']
     print(raw_msg)
