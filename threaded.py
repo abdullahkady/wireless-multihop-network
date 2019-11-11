@@ -3,7 +3,7 @@ import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = "MO"
+DISPLAY_NAME = "Nav"
 assert (DISPLAY_NAME is not None)
 
 def serialize_topology():
@@ -43,6 +43,7 @@ def start_client():
                 try:
                     socket.send(DISPLAY_NAME)
                 except Exception as e:
+                    print("DISCONNECTION")
                     del CLIENT_SOCKETS[display_name]
                     continue
 
@@ -60,6 +61,7 @@ def start_client():
                 update_topology(socket.recv(1024))
                 print(CLIENT_SOCKETS)
             except Exception as e:
+                print("DISCONNECTION")
                 del CLIENT_SOCKETS[display_name]
 
 # ============================================================================= #
@@ -122,10 +124,13 @@ def server_socket_worker(client_socket, name):
         try:
             data = client_socket.recv(1024)
         except Exception as e:
+            print("DISCONNECTION")
+            del CLIENT_SOCKETS[name]
             break
 
         update_topology(data)
         print(CLIENT_SOCKETS)
+
         data = {
             'source': DISPLAY_NAME,
             'data': serialize_topology()
@@ -136,6 +141,7 @@ def server_socket_worker(client_socket, name):
         try:
             client_socket.send(json.dumps(data))
         except Exception as e:
+            print("DISCONNECTION")
             del CLIENT_SOCKETS[name]
             break
 
