@@ -1,9 +1,10 @@
 import json
+import os
 import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = "Mo"
+DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
 assert (DISPLAY_NAME is not None)
 
 def serialize_topology():
