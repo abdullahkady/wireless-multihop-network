@@ -28,16 +28,15 @@ def start_client():
             host = service["host"]
             display_name = service["description"]
 
-            print("start_client: Connecting to \"%s\"" % (display_name,))
-
             # Create the client socket
-            if display_name in CLIENT_SOCKETS:
-                socket = CLIENT_SOCKETS[display_name]
-            else:
+            if not display_name in CLIENT_SOCKETS:
+                print("start_client: Connecting to \"%s\"" % (display_name,))
+
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 
                 try:
                     socket.connect((host, port))
+                    socket.send(DISPLAY_NAME)
                 except Exception as e:
                     continue
 
@@ -45,37 +44,11 @@ def start_client():
                 CLIENT_SOCKETS[display_name] = socket
                 TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
 
-                try:
-                    socket.send(DISPLAY_NAME)
-                except Exception as e:
-                    print("DISCONNECTION")
-                    del CLIENT_SOCKETS[display_name]
-                    new_topology = TOPOLOGY.copy()
-                    for edge in TOPOLOGY:
-                        if edge == frozenset(DISPLAY_NAME, display_name):
-                            new_topology.remove(edge)
-                    TOPOLOGY = new_topology.copy()
-                    # TOPOLOGY = set()
-                    continue
+                threading.Thread(
+                    target=socket_worker,
+                    args=[socket, display_name]).start()
 
-            print("start_client: Connected.")
-            data = {
-                'source': DISPLAY_NAME,
-                'data': serialize_topology()
-            }
-            print('start_client: Sending: ', data)
-
-            try:
-                socket.send(json.dumps(data))
-            except Exception as e:
-                print("DISCONNECTION")
-                del CLIENT_SOCKETS[display_name]
-
-            try:
-                # Wait for the topology reply
-                update_topology(socket.recv(1024))
-            except Exception as e:
-                continue
+                print("start_client: Connected.")
 
 # ============================================================================= #
 
@@ -135,9 +108,13 @@ def update_topology(raw_msg):
             new_topology.add(edge)
     TOPOLOGY = new_topology.copy()
 
+    print("UPDATED TOPOLOGY")
+    print(TOPOLOGY)
 
-def server_socket_worker(client_socket, name):
+def socket_worker(client_socket, name):
     while True:
+        data = None
+
         try:
             data = client_socket.recv(1024)
 
@@ -149,10 +126,10 @@ def server_socket_worker(client_socket, name):
                 'data': serialize_topology()
             }
         except Exception as e:
-            pass
+            continue
 
         # Reply back with the topology
-        print('server_socket_worker: Sending: ', data)
+        print('socket_worker: Sending: ', data)
 
         try:
             client_socket.send(json.dumps(data))
@@ -185,7 +162,7 @@ def start_server(port):
             continue
 
         CLIENT_SOCKETS[name] = client_socket
-        threading.Thread(target=server_socket_worker, args=[
+        threading.Thread(target=socket_worker, args=[
                          client_socket, name]).start()
 
 
