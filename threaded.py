@@ -3,7 +3,7 @@ import threading
 import bluetooth
 
 CLIENT_SOCKETS = {}
-DISPLAY_NAME = "Nav"
+DISPLAY_NAME = "MO"
 assert (DISPLAY_NAME is not None)
 
 def serialize_topology():
@@ -109,13 +109,13 @@ def update_topology(raw_msg):
 
     for edge in TOPOLOGY:
         if source in edge and not edge in incoming_topology:
-            TOPOLOGY.discard(edge)
+            TOPOLOGY.remove(edge)
 
     reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
     for edge in TOPOLOGY:
         x, y = edge
         if not x in reachable_nodes:
-            TOPOLOGY.discard(edge)
+            TOPOLOGY.remove(edge)
 
 def server_socket_worker(client_socket, name):
     while True:
