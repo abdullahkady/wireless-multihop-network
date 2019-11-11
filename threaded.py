@@ -114,7 +114,11 @@ def update_topology(raw_msg):
 def socket_worker(client_socket, name):
     while True:
         print("Socket worker running")
-        data = None
+
+        data = {
+            'source': DISPLAY_NAME,
+            'data': serialize_topology()
+        }
 
         # Send topology
         print('socket_worker: Sending: ', data)
@@ -131,11 +135,6 @@ def socket_worker(client_socket, name):
 
             update_topology(data)
             print(CLIENT_SOCKETS)
-
-            data = {
-                'source': DISPLAY_NAME,
-                'data': serialize_topology()
-            }
         except Exception as e:
             print(e)
             continue
