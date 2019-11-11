@@ -112,10 +112,12 @@ def update_topology(raw_msg):
             TOPOLOGY.remove(edge)
 
     reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
+    new_topology = set()
     for edge in TOPOLOGY:
         x, y = edge
-        if not x in reachable_nodes:
-            TOPOLOGY.remove(edge)
+        if x in reachable_nodes:
+            new_topology.add(edge)
+    TOPOLOGY = new_topology.copy()
 
 def server_socket_worker(client_socket, name):
     while True:
