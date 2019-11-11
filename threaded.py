@@ -6,10 +6,6 @@ CLIENT_SOCKETS = {}
 DISPLAY_NAME = "Nav"
 assert (DISPLAY_NAME is not None)
 
-# TODO: Investigate if 2 devices will have 2 channels, we
-# need to skip connecting the client if server connected
-
-
 def serialize_topology():
     # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
     # Convert them back into 2d lists
@@ -35,7 +31,12 @@ def start_client():
                 socket = CLIENT_SOCKETS[display_name]
             else:
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
-                socket.connect((host, port))
+
+                try:
+                    socket.connect((host, port))
+                except Exception as e:
+                    continue
+
                 CLIENT_SOCKETS[display_name] = socket
                 TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
 
@@ -43,6 +44,7 @@ def start_client():
                     socket.send(DISPLAY_NAME)
                 except Exception as e:
                     del CLIENT_SOCKETS[DISPLAY_NAME]
+                    continue
 
             print("start_client: Connected.")
             data = {
@@ -53,6 +55,7 @@ def start_client():
 
             try:
                 socket.send(json.dumps(data))
+
                 # Wait for the topology reply
                 update_topology(socket.recv(1024))
             except Exception as e:
@@ -86,7 +89,7 @@ def bfs(edge_list, source_node):
                     queue.append(x)
                     visited.append(x)
     return visited
-    
+
 def update_topology(raw_msg):
     # Parse JSON
     # Build topology
@@ -115,7 +118,11 @@ def update_topology(raw_msg):
 
 def server_socket_worker(client_socket, name):
     while True:
-        data = client_socket.recv(1024)
+        try:
+            data = client_socket.recv(1024)
+        except Exception as e:
+            break
+
         update_topology(data)
         data = {
             'source': DISPLAY_NAME,
@@ -143,13 +150,17 @@ def start_server(port):
     while True:
         client_socket, client_info = server_sock.accept()
         print("start_server: Accepted connection from ", client_info)
-        name = client_socket.recv(1024)  # First message will be the display name
+
+        try:
+            name = client_socket.recv(1024)  # First message will be the display name
+        except Exception as e:
+            continue
+
         CLIENT_SOCKETS[name] = client_socket
         threading.Thread(target=server_socket_worker, args=[client_socket, name]).start()
 
 
 if __name__ == "__main__":
-    # TODO: Periodically discover?
     x = threading.Thread(target=start_server, args=(1, ))
     x.start()
     # x.join()
