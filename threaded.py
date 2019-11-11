@@ -30,7 +30,7 @@ def start_client():
 
             # Create the client socket
             if not display_name in CLIENT_SOCKETS:
-                print("start_client: Connecting to \"%s\"" % (display_name,))
+                print("start_client: Connecting to \"%s\" port %s" % (display_name,port,))
 
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 
@@ -113,7 +113,18 @@ def update_topology(raw_msg):
 
 def socket_worker(client_socket, name):
     while True:
+        print("Socket worker running")
         data = None
+
+        # Send topology
+        print('socket_worker: Sending: ', data)
+
+        try:
+            client_socket.send(json.dumps(data))
+        except Exception as e:
+            print("DISCONNECTION")
+            del CLIENT_SOCKETS[name]
+            break
 
         try:
             data = client_socket.recv(1024)
@@ -126,18 +137,8 @@ def socket_worker(client_socket, name):
                 'data': serialize_topology()
             }
         except Exception as e:
+            print(e)
             continue
-
-        # Reply back with the topology
-        print('socket_worker: Sending: ', data)
-
-        try:
-            client_socket.send(json.dumps(data))
-        except Exception as e:
-            print("DISCONNECTION")
-            del CLIENT_SOCKETS[name]
-            break
-
 
 def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
@@ -160,6 +161,8 @@ def start_server(port):
             name = client_socket.recv(1024)
         except Exception as e:
             continue
+
+        print(name)
 
         CLIENT_SOCKETS[name] = client_socket
         threading.Thread(target=socket_worker, args=[
