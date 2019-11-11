@@ -58,6 +58,7 @@ def start_client():
 
                 # Wait for the topology reply
                 update_topology(socket.recv(1024))
+                print(CLIENT_SOCKETS)
             except Exception as e:
                 del CLIENT_SOCKETS[display_name]
 
@@ -124,6 +125,7 @@ def server_socket_worker(client_socket, name):
             break
 
         update_topology(data)
+        print(CLIENT_SOCKETS)
         data = {
             'source': DISPLAY_NAME,
             'data': serialize_topology()
