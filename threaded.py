@@ -104,14 +104,13 @@ def update_topology(raw_msg):
         TOPOLOGY.add(frozenset(edge))
 
     for edge in TOPOLOGY:
-        x, y = edge
-        if x | y == source and not edge in incoming_topology:
+        if source in edge and not edge in incoming_topology:
             TOPOLOGY.discard(edge)
 
     reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
     for edge in TOPOLOGY:
         x, y = edge
-        if not x | y in reachable_nodes:
+        if not x in reachable_nodes:
             TOPOLOGY.discard(edge)
 
 def server_socket_worker(client_socket, name):
