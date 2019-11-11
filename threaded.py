@@ -38,6 +38,7 @@ def start_client():
                 except Exception as e:
                     continue
 
+                socket.settimeout(5.0)
                 CLIENT_SOCKETS[display_name] = socket
                 TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
 
@@ -57,13 +58,15 @@ def start_client():
 
             try:
                 socket.send(json.dumps(data))
-
-                # Wait for the topology reply
-                update_topology(socket.recv(1024))
-                print(CLIENT_SOCKETS)
             except Exception as e:
                 print("DISCONNECTION")
                 del CLIENT_SOCKETS[display_name]
+
+            try:
+                # Wait for the topology reply
+                update_topology(socket.recv(1024))
+            except Exception as e:
+                continue
 
 # ============================================================================= #
 
@@ -102,7 +105,7 @@ def update_topology(raw_msg):
     #     'data': [['EDGES']]
     # }
     global TOPOLOGY
-    
+
     raw_msg = json.loads(raw_msg.decode('utf-8'))
     source = raw_msg['source']
     print(raw_msg)
@@ -128,18 +131,17 @@ def server_socket_worker(client_socket, name):
     while True:
         try:
             data = client_socket.recv(1024)
+
+            update_topology(data)
+            print(CLIENT_SOCKETS)
+
+            data = {
+                'source': DISPLAY_NAME,
+                'data': serialize_topology()
+            }
         except Exception as e:
-            print("DISCONNECTION")
-            del CLIENT_SOCKETS[name]
-            break
+            pass
 
-        update_topology(data)
-        print(CLIENT_SOCKETS)
-
-        data = {
-            'source': DISPLAY_NAME,
-            'data': serialize_topology()
-        }
         # Reply back with the topology
         print('server_socket_worker: Sending: ', data)
 
@@ -163,6 +165,8 @@ def start_server(port):
     while True:
         client_socket, client_info = server_sock.accept()
         print("start_server: Accepted connection from ", client_info)
+
+        client_socket.settimeout(5.0)
 
         try:
             name = client_socket.recv(1024)  # First message will be the display name
