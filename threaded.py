@@ -133,7 +133,7 @@ def socket_worker(client_socket, name):
             del CLIENT_SOCKETS[name]
             new_topology = TOPOLOGY.copy()
             for edge in TOPOLOGY:
-                if edge == frozenset(DISPLAY_NAME, display_name):
+                if edge == frozenset(DISPLAY_NAME, name):
                     new_topology.remove(edge)
             TOPOLOGY = new_topology.copy()
             break
