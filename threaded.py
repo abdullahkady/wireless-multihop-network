@@ -3,9 +3,11 @@ import os
 import threading
 import bluetooth
 
+TOPOLOGY = set()
 CLIENT_SOCKETS = {}
 DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
 assert (DISPLAY_NAME is not None)
+
 
 def serialize_topology():
     # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
@@ -15,6 +17,7 @@ def serialize_topology():
 
 
 def start_client():
+    global TOPOLOGY
     service_matches = bluetooth.find_service(name="NetworksTest")
 
     if len(service_matches) == 0:
@@ -47,6 +50,12 @@ def start_client():
                 except Exception as e:
                     print("DISCONNECTION")
                     del CLIENT_SOCKETS[display_name]
+                    new_topology = TOPOLOGY.copy()
+                    for edge in TOPOLOGY:
+                        if edge == frozenset(DISPLAY_NAME, display_name):
+                            new_topology.remove(edge)
+                    TOPOLOGY = new_topology.copy()
+                    # TOPOLOGY = set()
                     continue
 
             print("start_client: Connected.")
@@ -71,8 +80,6 @@ def start_client():
 # ============================================================================= #
 
 
-TOPOLOGY = set()
-
 def bfs(edge_list, source_node):
     # s = set()
     # s.add(frozenset(["Mo","kady"]))
@@ -96,6 +103,7 @@ def bfs(edge_list, source_node):
                     queue.append(x)
                     visited.append(x)
     return visited
+
 
 def update_topology(raw_msg):
     # Parse JSON
@@ -126,6 +134,7 @@ def update_topology(raw_msg):
         if x in reachable_nodes:
             new_topology.add(edge)
     TOPOLOGY = new_topology.copy()
+
 
 def server_socket_worker(client_socket, name):
     while True:
@@ -158,7 +167,8 @@ def start_server(port):
     server_sock.bind(("", port))
     server_sock.listen(port)
 
-    bluetooth.advertise_service(server_sock, "NetworksTest", description=DISPLAY_NAME)
+    bluetooth.advertise_service(
+        server_sock, "NetworksTest", description=DISPLAY_NAME)
 
     print("start_server: Waiting for connections on RFCOMM channel %d" % port)
 
@@ -169,12 +179,14 @@ def start_server(port):
         client_socket.settimeout(5.0)
 
         try:
-            name = client_socket.recv(1024)  # First message will be the display name
+            # First message will be the display name
+            name = client_socket.recv(1024)
         except Exception as e:
             continue
 
         CLIENT_SOCKETS[name] = client_socket
-        threading.Thread(target=server_socket_worker, args=[client_socket, name]).start()
+        threading.Thread(target=server_socket_worker, args=[
+                         client_socket, name]).start()
 
 
 if __name__ == "__main__":
