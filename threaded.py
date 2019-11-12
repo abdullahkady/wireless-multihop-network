@@ -22,7 +22,7 @@ def start_client():
     service_matches = bluetooth.find_service(name="NetworksTest")
 
     if len(service_matches) == 0:
-        print("start_client: Couldn't find the NetworksTest service =(")
+        print("start_client: Couldn't find the NetworksTest service")
     else:
         for service in service_matches:
             port = service["port"]
@@ -49,18 +49,12 @@ def start_client():
                     target=socket_worker,
                     args=[socket, display_name]).start()
 
-                print("start_client: Connected.")
+                print(f"start_client: Connected to {display_name} on port {port}.")
 
 # ============================================================================= #
 
 
 def bfs(edge_list, source_node):
-    # s = set()
-    # s.add(frozenset(["Mo","kady"]))
-    # s.add(frozenset(["Mo","Nav"]))
-    # s.add(frozenset(["Nav","Goudah"]))
-    # s.add(frozenset(["Goudah","Amr"]))
-
     queue = []
     visited = []
     queue.append(source_node)
@@ -92,25 +86,24 @@ def update_topology(raw_msg):
     source = raw_msg['source']
     print(raw_msg)
     incoming_topology = set()
-
     for edge in raw_msg['data']:
         incoming_topology.add(frozenset(edge))
         TOPOLOGY.add(frozenset(edge))
 
+    new_topology = TOPOLOGY.copy()
     for edge in TOPOLOGY:
         if source in edge and not edge in incoming_topology:
-            TOPOLOGY.remove(edge)
+            new_topology.remove(edge)
 
-    reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
-    new_topology = set()
+    reachable_nodes = bfs(new_topology, DISPLAY_NAME)
     for edge in TOPOLOGY:
         x, y = edge
-        if x in reachable_nodes:
-            new_topology.add(edge)
+        if not x in reachable_nodes:
+            new_topology.remove(edge)
     TOPOLOGY = new_topology.copy()
 
-    print("UPDATED TOPOLOGY FROM another node")
-    print(TOPOLOGY)
+    print(f"UPDATED TOPOLOGY FROM {source}")
+    print("New Topology: ",TOPOLOGY)
 
 def socket_worker(client_socket, name):
     global TOPOLOGY
@@ -132,12 +125,12 @@ def socket_worker(client_socket, name):
             print("DISCONNECTION")
             del CLIENT_SOCKETS[name]
             new_topology = TOPOLOGY.copy()
-            print('Old Toplogy: ', TOPOLOGY)
+            print('Old Topology: ', TOPOLOGY)
             for edge in TOPOLOGY:
                 if edge == frozenset([DISPLAY_NAME, name]):
                     new_topology.remove(edge)
             TOPOLOGY = new_topology.copy()
-            print('New Toplogy: ', TOPOLOGY)
+            print('New Topology: ', TOPOLOGY)
             break
 
         try:
