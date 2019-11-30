@@ -33,7 +33,7 @@ def start_client():
 
             # Create the client socket
             if not display_name in CLIENT_SOCKETS:
-                print("start_client: Connecting to \"%s\" port %s" % (display_name,port,))
+                print("start_client: Connecting to \"%s\" port %s" % (display_name, port,))
 
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 
@@ -51,7 +51,7 @@ def start_client():
                     target=socket_worker,
                     args=[socket, display_name]).start()
 
-                print(f"start_client: Connected to {display_name} on port {port}.")
+                print("start_client: Connected to {} on port {}.".format(display_name, port))
 
 # ============================================================================= #
 
@@ -74,6 +74,7 @@ def bfs(edge_list, source_node):
                     visited.append(x)
     return visited
 
+
 def message():
     return {
         'source': DISPLAY_NAME,
@@ -81,6 +82,7 @@ def message():
         'value': {},
         'path': []
     }
+
 
 def control_message(event, point2):
     msg = message()
@@ -90,6 +92,7 @@ def control_message(event, point2):
     msg['value']['point2'] = point2
 
     return msg
+
 
 def flood_control_message(msg):
     for edge in TOPOLOGY:
@@ -102,6 +105,7 @@ def flood_control_message(msg):
 
         # send(new_msg)
 
+
 def update_topology(dictionary):
     global TOPOLOGY
 
@@ -110,7 +114,7 @@ def update_topology(dictionary):
 
     if(dictionary['event'] == 'connection'):
         TOPOLOGY.add(frozenset([dictionary['point1'], dictionary['point2']]))
-    else if(dictionary['event'] == 'disconnection'):
+    elif(dictionary['event'] == 'disconnection'):
         TOPOLOGY.remove(frozenset([dictionary['point1'], dictionary['point2']]))
     else:
         raise "Control event not recognized"
@@ -147,6 +151,7 @@ def update_topology(dictionary):
 #     #print(f"UPDATED TOPOLOGY FROM {source}")
 #     #print("New Topology: ",TOPOLOGY)
 
+
 def socket_worker(client_socket):
     while True:
         try:
@@ -158,22 +163,25 @@ def socket_worker(client_socket):
             print(e)
             continue
 
+
 def disconnection_detector():
     while True:
         for client in CLIENT_SOCKETS:
             try:
                 CLIENT_SOCKETS[client].send("ping")
             except Exception as e:
+                pass
                 # TODO: Handle disconnection
-
         sleep(5)
+
 
 def sender():
     try:
         msg = MESSAGES.get()
         client_socket.send(json.dumps(data))
     except Exception as e:
-        break
+        pass
+
 
 def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
