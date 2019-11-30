@@ -1,11 +1,13 @@
+import bluetooth
+import copy
 import json
 import os
 import threading
 import time
-import bluetooth
 
 TOPOLOGY = set()
 CLIENT_SOCKETS = {}
+MESSAGES = Queue()
 DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
 assert (DISPLAY_NAME is not None)
 
@@ -72,77 +74,106 @@ def bfs(edge_list, source_node):
                     visited.append(x)
     return visited
 
+def message():
+    return {
+        'source': DISPLAY_NAME,
+        'destination': '',
+        'value': {},
+        'path': []
+    }
 
-def update_topology(raw_msg):
-    # Parse JSON
-    # Build topology
-    # {
-    #     'source': 'DISPLAY_NAME',
-    #     'data': [['EDGES']]
-    # }
+def control_message(event, point2):
+    msg = message()
+    msg['type'] = 'control'
+    msg['value']['event'] = event
+    msg['value']['point1'] = DISPLAY_NAME
+    msg['value']['point2'] = point2
+
+    return msg
+
+def flood_control_message(msg):
+    for edge in TOPOLOGY:
+        points = list(edge)
+
+        destination = points[0] if points[0] != DISPLAY_NAME else points[1]
+
+        new_msg = copy.deepcopy(msg)
+        new_msg['destination'] = destination
+
+        # send(new_msg)
+
+def update_topology(dictionary):
     global TOPOLOGY
 
-    raw_msg = json.loads(raw_msg.decode('utf-8'))
-    source = raw_msg['source']
-    print(raw_msg)
-    incoming_topology = set()
-    for edge in raw_msg['data']:
-        incoming_topology.add(frozenset(edge))
-        TOPOLOGY.add(frozenset(edge))
+    # If the entire message will be passed,
+    # access set dictionary to dictionary['value']
 
-    new_topology = TOPOLOGY.copy()
-    for edge in TOPOLOGY:
-        if source in edge and not edge in incoming_topology:
-            new_topology.remove(edge)
+    if(dictionary['event'] == 'connection'):
+        TOPOLOGY.add(frozenset([dictionary['point1'], dictionary['point2']]))
+    else if(dictionary['event'] == 'disconnection'):
+        TOPOLOGY.remove(frozenset([dictionary['point1'], dictionary['point2']]))
+    else:
+        raise "Control event not recognized"
 
-    reachable_nodes = bfs(new_topology, DISPLAY_NAME)
-    for edge in TOPOLOGY:
-        x, y = edge
-        if not x in reachable_nodes:
-            new_topology.remove(edge)
-    TOPOLOGY = new_topology.copy()
+# def update_topology(raw_msg):
+#     # Parse JSON
+#     # Build topology
+#     # {
+#     #     'source': 'DISPLAY_NAME',
+#     #     'data': [['EDGES']]
+#     # }
+#     global TOPOLOGY
 
-    print(f"UPDATED TOPOLOGY FROM {source}")
-    print("New Topology: ",TOPOLOGY)
+#     raw_msg = json.loads(raw_msg.decode('utf-8'))
+#     source = raw_msg['source']
+#     incoming_topology = set()
+#     for edge in raw_msg['data']:
+#         incoming_topology.add(frozenset(edge))
+#         TOPOLOGY.add(frozenset(edge))
 
-def socket_worker(client_socket, name):
-    global TOPOLOGY
+#     # new_topology = TOPOLOGY.copy()
+#     # for edge in TOPOLOGY:
+#     #     if source in edge and not edge in incoming_topology:
+#     #         new_topology.remove(edge)
 
+#     # reachable_nodes = bfs(new_topology, DISPLAY_NAME)
+#     # for edge in TOPOLOGY:
+#     #     x, y = edge
+#     #     if not x in reachable_nodes:
+#     #         new_topology.remove(edge)
+
+#     # TOPOLOGY = new_topology.copy()
+
+#     #print(f"UPDATED TOPOLOGY FROM {source}")
+#     #print("New Topology: ",TOPOLOGY)
+
+def socket_worker(client_socket):
     while True:
-        print("Socket worker running")
-
-        data = {
-            'source': DISPLAY_NAME,
-            'data': serialize_topology()
-        }
-
-        # Send topology
-        print('socket_worker: Sending: ', data)
-
-        try:
-            client_socket.send(json.dumps(data))
-        except Exception as e:
-            print("DISCONNECTION")
-            del CLIENT_SOCKETS[name]
-            new_topology = TOPOLOGY.copy()
-            print('Old Topology: ', TOPOLOGY)
-            for edge in TOPOLOGY:
-                if edge == frozenset([DISPLAY_NAME, name]):
-                    new_topology.remove(edge)
-            TOPOLOGY = new_topology.copy()
-            print('New Topology: ', TOPOLOGY)
-            break
-
         try:
             data = client_socket.recv(1024)
-
             update_topology(data)
-            print(CLIENT_SOCKETS)
+
+            # TODO: Handle routing
         except Exception as e:
             print(e)
             continue
 
-        time.sleep(5)
+def disconnection_detector():
+    while True:
+        for client in CLIENT_SOCKETS:
+            try:
+                CLIENT_SOCKETS[client].send("ping")
+            except Exception as e:
+                # TODO: Handle disconnection
+
+        sleep(5)
+
+def sender():
+    try:
+        msg = MESSAGES.get()
+        client_socket.send(json.dumps(data))
+    except Exception as e:
+        break
 
 def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
