@@ -7,7 +7,8 @@ import time
 
 TOPOLOGY = set()
 CLIENT_SOCKETS = {}
-MESSAGES = Queue()
+# MESSAGES = Queue()
+MESSAGES = {}
 DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
 assert (DISPLAY_NAME is not None)
 
@@ -48,8 +49,14 @@ def start_client():
                 TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
 
                 threading.Thread(
-                    target=socket_worker,
-                    args=[socket, display_name]).start()
+                    target=receiver,
+                    args=[socket, display_name]
+                ).start()
+
+                threading.Thread(
+                    target=sender,
+                    args=[socket, display_name]
+                ).start()
 
                 print("start_client: Connected to {} on port {}.".format(display_name, port))
 
@@ -103,7 +110,7 @@ def flood_control_message(msg):
         new_msg = copy.deepcopy(msg)
         new_msg['destination'] = destination
 
-        # send(new_msg)
+        MESSAGES[destination].put(new_msg)
 
 
 def update_topology(dictionary):
@@ -152,10 +159,14 @@ def update_topology(dictionary):
 #     #print("New Topology: ",TOPOLOGY)
 
 
-def socket_worker(client_socket):
+def receiver(client_socket, name):
     while True:
         try:
             data = client_socket.recv(1024)
+
+            if(data == "ping"):
+                continue
+
             update_topology(data)
 
             # TODO: Handle routing
@@ -172,12 +183,12 @@ def disconnection_detector():
             except Exception as e:
                 pass
                 # TODO: Handle disconnection
-        sleep(5)
+        time.sleep(5)
 
 
-def sender():
+def sender(client_socket, name):
     try:
-        msg = MESSAGES.get()
+        msg = MESSAGES[name].get()
         client_socket.send(json.dumps(data))
     except Exception as e:
         pass
@@ -208,14 +219,17 @@ def start_server(port):
         print(name)
 
         CLIENT_SOCKETS[name] = client_socket
-        threading.Thread(target=socket_worker, args=[
+        MESSAGES[name] = Queue()
+
+        threading.Thread(target=receiver, args=[
+                         client_socket, name]).start()
+        threading.Thread(target=sender, args=[
                          client_socket, name]).start()
 
 
 if __name__ == "__main__":
-    x = threading.Thread(target=start_server, args=(1, ))
-    x.start()
-    # x.join()
+    threading.Thread(target=start_server, args=(1, )).start()
+    threading.Thread(target=disconnection_detector).start()
 
     while True:
         time.sleep(5)
