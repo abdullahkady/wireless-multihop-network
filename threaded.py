@@ -148,11 +148,14 @@ def disconnection_detector():
 def sender(client_socket, name):
     while True:
         try:
+            print("sender")
+            print(MESSAGES[name].qsize())
             msg = MESSAGES[name].get(True, None)
             client_socket.send(json.dumps(msg))
         except Exception as e:
             print(e)
             pass
+        time.sleep(1)
 
 def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
