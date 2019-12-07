@@ -71,7 +71,7 @@ def get_all_devices(topology, self_name):
     return devices
 
 
-def serialize_topology(topology):
+def serialize_topology(topology, destination):
     # For the first connection, generate control messages representing the
     # entire topology in terms of control messages.
-    return [control_message('connection', x, y) for x, y in topology]
+    return [{**control_message('connection', x, y), 'destination': destination} for x, y in topology]
