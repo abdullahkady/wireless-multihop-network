@@ -165,6 +165,7 @@ def start_server(port):
         except Exception as e:
             continue
 
+        TOPOLOGY.add(frozenset([DISPLAY_NAME, client_name]))
         SOCKETS[client_name] = client_socket
         MESSAGES[client_name] = Queue()
 
