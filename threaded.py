@@ -44,6 +44,12 @@ def start_client():
                 socket.settimeout(5.0)
                 add_connection(client_name, socket)
 
+                for message in utils.serialize_topology(TOPOLOGY):
+                    MESSAGES[client_name].put(message)
+
+                # Flood my own clients, think of the case where:
+                #  X - Y && W - Z :: Now Y-W, one edge won't know about the rest of the network.
+                flood_control_message('connection', client_name)
                 print("start_client: Connected to {} on port {}.".format(client_name, port))
 
 # ============================================================================= #
@@ -159,8 +165,7 @@ def start_server(port):
     server_sock.bind(("", port))
     server_sock.listen(port)
 
-    bluetooth.advertise_service(
-        server_sock, "NetworksTest", description=DISPLAY_NAME)
+    bluetooth.advertise_service(server_sock, "NetworksTest", description=DISPLAY_NAME)
 
     print("start_server: Waiting for connections on RFCOMM channel %d" % port)
 
@@ -178,6 +183,9 @@ def start_server(port):
             continue
 
         add_connection(client_name, client_socket)
+
+        for message in utils.serialize_topology(TOPOLOGY):
+            MESSAGES[client_name].put(message)
 
         # Flood connection message
         flood_control_message('connection', client_name)

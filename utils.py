@@ -42,14 +42,7 @@ def get_path(source, destination, edge_set):
     return path[::-1]
 
 
-def serialize_topology(TOPOLOGY):
-    # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
-    # Convert them back into 2d lists
-    # serializeable_set = [[1,2], [2,3]]
-    return [[i for i in edge] for edge in TOPOLOGY]
-
-
-def control_message(event, point2, display_name):
+def control_message(event, target, display_name):
     msg = {
         'source': display_name,
         'destination': '',
@@ -59,7 +52,7 @@ def control_message(event, point2, display_name):
     msg['type'] = 'control'
     msg['data']['event'] = event
     msg['data']['point1'] = display_name
-    msg['data']['point2'] = point2
+    msg['data']['point2'] = target
     return msg
 
 
@@ -76,3 +69,9 @@ def get_all_devices(topology, self_name):
         pass
 
     return devices
+
+
+def serialize_topology(topology):
+    # For the first connection, generate control messages representing the
+    # entire topology in terms of control messages.
+    return [control_message('connection', x, y) for x, y in topology]
