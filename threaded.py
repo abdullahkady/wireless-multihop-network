@@ -149,8 +149,14 @@ def sender(client_socket, name):
     while True:
         try:
             print("sender")
+            print(MESSAGES)
+            print(" --- 1 --- ")
             print(MESSAGES[name].qsize())
+            print(" --- 2 --- ")
+            print("")
             msg = MESSAGES[name].get(True, None)
+            print(msg)
+            print(" --- 3 --- ")
             client_socket.send(json.dumps(msg))
         except Exception as e:
             print(e)
