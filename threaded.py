@@ -59,14 +59,13 @@ def flood_control_message(event, target_user):
     for destination in utils.get_all_devices(TOPOLOGY, DISPLAY_NAME):
         new_msg = utils.control_message(event, target_user, DISPLAY_NAME)
         new_msg['destination'] = destination
-        send_message(new_msg)
+        add_to_the_queue(new_msg)
 
 
-def send_message(msg_dict):
+def add_to_the_queue(msg_dict):
     # To be used for data messages
     # Appends the path, and puts it in the queue
     msg_dict['path'] = utils.get_path(msg_dict['source'], msg_dict['destination'], TOPOLOGY)
-    print(msg_dict)
     msg_dict['path'].pop(0)
     next_hop = msg_dict['path'][0]
     MESSAGES[next_hop].put(msg_dict)
@@ -88,20 +87,15 @@ def update_topology(dictionary):
 
 def receiver(client_socket, client_name):
     while True:
-        print("receiver loop")
         try:
             data = client_socket.recv(1024).decode('utf-8')
-
-            print(data)
-
             if data == "ping":
                 continue
 
             # TODO: Handle routing
             msg = json.loads(data)
-            print('+++++++++++++++++++++++++++++++++++++++')
+            print('+++++++++++++++++RECEIVER+++++++++++++++++')
             print(json.dumps(msg))
-            print('+++++++++++++++++++++++++++++++++++++++')
             if msg['destination'] == DISPLAY_NAME:
                 # Message intended for me
                 if msg['type'] == 'control':
@@ -132,7 +126,6 @@ def handle_disconnection(client_name):
 def disconnection_detector():
     while True:
         try:
-            print("disconnection detector loop")
             for name, socket in SOCKETS.items():
                 try:
                     socket.send("ping")
@@ -151,7 +144,6 @@ def sender(client_socket, name):
             print({k: v.queue for k, v in MESSAGES.items()})
             msg = MESSAGES[name].get(True, None)
             print(json.dumps(msg))
-            print("=================SENDER================")
 
             client_socket.send(json.dumps(msg))
         except Exception as e:
