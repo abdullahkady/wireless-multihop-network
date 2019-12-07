@@ -100,10 +100,11 @@ def receiver(client_socket, client_name):
             # TODO: Handle routing
             msg = json.loads(data)
             if msg['destination'] == DISPLAY_NAME:
+                # Message intended for me
                 if msg['type'] == 'control':
                     update_topology(msg['data'])
                 else:
-                    # Data message intended for me
+                    # Data message
                     print(msg['source'], ': ', msg['data'])
             else:
                 msg['path'].pop()
@@ -156,26 +157,29 @@ def start_server(port):
         client_socket, client_info = server_sock.accept()
         print("start_server: Accepted connection from ", client_info)
 
-        client_socket.settimeout(5.0)
+        client_socket.settimeout(5.0)  # Will raise if 'recv' waits for more than 5s
 
         try:
             # First message will be the display name
-            name = client_socket.recv(1024)
+            client_name = client_socket.recv(1024)
         except Exception as e:
             continue
 
-        SOCKETS[name] = client_socket
-        MESSAGES[name] = Queue()
+        SOCKETS[client_name] = client_socket
+        MESSAGES[client_name] = Queue()
+
+        # Flood connection
+        flood_control_message('connection', client_name)
 
         threading.Thread(
             target=receiver,
-            args=[client_socket, name]
+            args=[client_socket, client_name]
 
         ).start()
 
         threading.Thread(
             target=sender,
-            args=[client_socket, name]
+            args=[client_socket, client_name]
         ).start()
 
 
