@@ -64,7 +64,7 @@ def control_message(event, point2, display_name):
 
 
 def get_all_devices(topology, self_name):
-    devices = set([])
+    devices = set()
 
     for x, y in topology:
         devices.add(x)
@@ -74,3 +74,5 @@ def get_all_devices(topology, self_name):
         devices.remove(self_name)
     except KeyError:
         pass
+
+    return devices
