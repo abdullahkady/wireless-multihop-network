@@ -94,9 +94,9 @@ def update_topology(dictionary):
 def receiver(client_socket, client_name):
     while True:
         try:
-            data = client_socket.recv(1024)
+            data = client_socket.recv(1024).decode('utf-8')
 
-            if(data == "ping"):
+            if data == "ping":
                 continue
 
             # TODO: Handle routing
