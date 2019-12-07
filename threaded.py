@@ -113,7 +113,7 @@ def receiver(client_socket, client_name):
                 MESSAGES[msg['path'][0]] = msg
 
         except Exception as e:
-            print(e)
+            # Timeout
             continue
 
 
