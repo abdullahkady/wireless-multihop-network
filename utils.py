@@ -42,17 +42,19 @@ def get_path(source, destination, edge_set):
     return path[::-1]
 
 
-def control_message(event, target, display_name):
+def control_message(event, point1, point2, source=None):
+    if source is None:
+        source = point2
     msg = {
-        'source': display_name,
+        'source': source,
         'destination': '',
         'data': {},
         'path': []
     }
     msg['type'] = 'control'
     msg['data']['event'] = event
-    msg['data']['point1'] = display_name
-    msg['data']['point2'] = target
+    msg['data']['point1'] = point1
+    msg['data']['point2'] = point2
     return msg
 
 
@@ -71,7 +73,7 @@ def get_all_devices(topology, self_name):
     return devices
 
 
-def serialize_topology(topology, destination):
+def serialize_topology(topology, destination, source):
     # For the first connection, generate control messages representing the
     # entire topology in terms of control messages.
-    return [{**control_message('connection', x, y), 'destination': destination} for x, y in topology]
+    return [{**control_message('connection', x, y, source=source), 'destination': destination} for x, y in topology]

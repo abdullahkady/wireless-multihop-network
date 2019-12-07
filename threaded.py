@@ -44,7 +44,7 @@ def start_client():
                 socket.settimeout(5.0)
                 add_connection(client_name, socket)
 
-                for message in utils.serialize_topology(TOPOLOGY, client_name):
+                for message in utils.serialize_topology(TOPOLOGY, client_name, DISPLAY_NAME):
                     MESSAGES[client_name].put(message)
 
                 # Flood my own clients, think of the case where:
@@ -184,7 +184,7 @@ def start_server(port):
         # Flood connection message
         flood_control_message('connection', client_name)
 
-        for message in utils.serialize_topology(TOPOLOGY, client_name):
+        for message in utils.serialize_topology(TOPOLOGY, client_name, DISPLAY_NAME):
             MESSAGES[client_name].put(message)
 
 
