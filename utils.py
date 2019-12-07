@@ -1,14 +1,14 @@
-def get_path(source, destination, edge_list):
+def get_path(source, destination, edge_set):
     """
     Get path between source node & destination node using dijkstra
     source: Source Node
     destination: Destination Node
-    edge_list: frozenset of edges
+    edge_set: set of frozensets (edges)
     """
     topology = {}
     inf = float('inf')
 
-    for x, y in edge_list:
+    for x, y in edge_set:
         topology[x] = topology.get(x, []) + [y]
         topology[y] = topology.get(y, []) + [x]
 
@@ -40,3 +40,29 @@ def get_path(source, destination, edge_list):
         path.append(current_vertex)
 
     return path[::-1]
+
+
+def serialize_topology(TOPOLOGY):
+    # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
+    # Convert them back into 2d lists
+    # serializeable_set = [[1,2], [2,3]]
+    return [[i for i in edge] for edge in TOPOLOGY]
+
+def message():
+    return {
+        'source': DISPLAY_NAME,
+        'destination': '',
+        'value': {},
+        'path': []
+    }
+
+def control_message(event, point2):
+    msg = message()
+    msg['type'] = 'control'
+    msg['value']['event'] = event
+    msg['value']['point1'] = DISPLAY_NAME
+    msg['value']['point2'] = point2
+    return msg
+
+
+
