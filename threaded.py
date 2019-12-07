@@ -93,6 +93,7 @@ def update_topology(dictionary):
 
 def receiver(client_socket, client_name):
     while True:
+        print("receiver loop")
         try:
             data = client_socket.recv(1024).decode('utf-8')
 
@@ -131,16 +132,22 @@ def handle_disconnection(client_name):
 
 def disconnection_detector():
     while True:
-        for name, socket in SOCKETS.items():
-            try:
-                socket.send("ping")
-            except Exception as e:
-                handle_disconnection(name)
-        time.sleep(5)
+        try:
+            print("disconnection detector loop")
+            for name, socket in SOCKETS.items():
+                try:
+                    socket.send("ping")
+                except Exception as e:
+                    handle_disconnection(name)
+            time.sleep(5)
+        except RuntimeError:
+            # dictionary changed size during iteration error
+            continue
 
 
 def sender(client_socket, name):
     while True:
+        print("sender loop")
         try:
             msg = MESSAGES[name].get()
             client_socket.send(json.dumps(msg))
