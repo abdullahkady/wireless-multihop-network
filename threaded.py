@@ -96,6 +96,8 @@ def receiver(client_socket, client_name):
         try:
             data = client_socket.recv(1024).decode('utf-8')
 
+            print(data)
+
             if data == "ping":
                 continue
 
