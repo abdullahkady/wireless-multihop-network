@@ -103,10 +103,11 @@ def receiver(client_socket, client_name):
             else:
                 msg['path'].pop(0)
                 MESSAGES[msg['path'][0]] = msg
-
         except Exception as e:
-            # Timeout
-            continue
+            if "timed out" in str(e):
+                continue
+            else:
+                break
 
 
 def handle_disconnection(client_name):
