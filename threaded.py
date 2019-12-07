@@ -140,11 +140,12 @@ def disconnection_detector():
 
 
 def sender(client_socket, name):
-    try:
-        msg = MESSAGES[name].get()
-        client_socket.send(json.dumps(msg))
-    except Exception as e:
-        pass
+    while True:
+        try:
+            msg = MESSAGES[name].get()
+            client_socket.send(json.dumps(msg))
+        except Exception as e:
+            pass
 
 
 def start_server(port):
