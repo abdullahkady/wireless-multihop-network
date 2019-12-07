@@ -4,21 +4,13 @@ import json
 import os
 import threading
 import time
-
+import utils
 TOPOLOGY = set()
 CLIENT_SOCKETS = {}
 # MESSAGES = Queue()
 MESSAGES = {}
 DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
 assert (DISPLAY_NAME is not None)
-
-
-def serialize_topology():
-    # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
-    # Convert them back into 2d lists
-    # serializeable_set = [[1,2], [2,3]]
-    return [[i for i in edge] for edge in TOPOLOGY]
-
 
 def start_client():
     global TOPOLOGY
@@ -62,45 +54,6 @@ def start_client():
 
 # ============================================================================= #
 
-
-def bfs(edge_list, source_node):
-    queue = []
-    visited = []
-    queue.append(source_node)
-    visited.append(source_node)
-    while not len(queue) == 0:
-        u = queue.pop(0)
-        for x, y in edge_list:
-            if x == u:
-                if not y in visited:
-                    queue.append(y)
-                    visited.append(y)
-            if y == u:
-                if not x in visited:
-                    queue.append(x)
-                    visited.append(x)
-    return visited
-
-
-def message():
-    return {
-        'source': DISPLAY_NAME,
-        'destination': '',
-        'value': {},
-        'path': []
-    }
-
-
-def control_message(event, point2):
-    msg = message()
-    msg['type'] = 'control'
-    msg['value']['event'] = event
-    msg['value']['point1'] = DISPLAY_NAME
-    msg['value']['point2'] = point2
-
-    return msg
-
-
 def flood_control_message(msg):
     for edge in TOPOLOGY:
         points = list(edge)
@@ -109,8 +62,8 @@ def flood_control_message(msg):
 
         new_msg = copy.deepcopy(msg)
         new_msg['destination'] = destination
-
-        MESSAGES[destination].put(new_msg)
+        new_msg['path'] = utils.get_path(new_msg['source'],new_msg['destination'],TOPOLOGY)
+        MESSAGES[new_msg['path'][0]].put(new_msg) 
 
 
 def update_topology(dictionary):
@@ -126,38 +79,6 @@ def update_topology(dictionary):
     else:
         raise "Control event not recognized"
 
-# def update_topology(raw_msg):
-#     # Parse JSON
-#     # Build topology
-#     # {
-#     #     'source': 'DISPLAY_NAME',
-#     #     'data': [['EDGES']]
-#     # }
-#     global TOPOLOGY
-
-#     raw_msg = json.loads(raw_msg.decode('utf-8'))
-#     source = raw_msg['source']
-#     incoming_topology = set()
-#     for edge in raw_msg['data']:
-#         incoming_topology.add(frozenset(edge))
-#         TOPOLOGY.add(frozenset(edge))
-
-#     # new_topology = TOPOLOGY.copy()
-#     # for edge in TOPOLOGY:
-#     #     if source in edge and not edge in incoming_topology:
-#     #         new_topology.remove(edge)
-
-#     # reachable_nodes = bfs(new_topology, DISPLAY_NAME)
-#     # for edge in TOPOLOGY:
-#     #     x, y = edge
-#     #     if not x in reachable_nodes:
-#     #         new_topology.remove(edge)
-
-#     # TOPOLOGY = new_topology.copy()
-
-#     #print(f"UPDATED TOPOLOGY FROM {source}")
-#     #print("New Topology: ",TOPOLOGY)
-
 
 def receiver(client_socket, name):
     while True:
@@ -167,9 +88,18 @@ def receiver(client_socket, name):
             if(data == "ping"):
                 continue
 
-            update_topology(data)
-
             # TODO: Handle routing
+            msg = json.loads(data)
+            if msg['destination'] == DISPLAY_NAME:
+                if msg['type'] == 'control':
+                    update_topology(msg)
+                else:
+                    print(msg)
+            else:
+                msg['path'].pop(0)
+                MESSAGES[DISPLAY_NAME] = msg
+
+                
         except Exception as e:
             print(e)
             continue
@@ -189,7 +119,7 @@ def disconnection_detector():
 def sender(client_socket, name):
     try:
         msg = MESSAGES[name].get()
-        client_socket.send(json.dumps(data))
+        client_socket.send(json.dumps(msg))
     except Exception as e:
         pass
 
@@ -212,7 +142,7 @@ def start_server(port):
 
         try:
             # First message will be the display name
-            name = client_socket.recv(1024)
+            name = client_socket.recv(1024) #FIXME
         except Exception as e:
             continue
 
