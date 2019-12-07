@@ -71,6 +71,7 @@ def send_message(msg_dict):
     # To be used for data messages
     # Appends the path, and puts it in the queue
     msg_dict['path'] = utils.get_path(msg_dict['source'], msg_dict['destination'], TOPOLOGY)
+    msg_dict['path'].pop()
     next_hop = msg_dict['path'][0]
     MESSAGES[next_hop].put(msg_dict)
 
