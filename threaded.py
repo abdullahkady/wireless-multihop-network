@@ -99,6 +99,9 @@ def receiver(client_socket, client_name):
 
             # TODO: Handle routing
             msg = json.loads(data)
+            print('+++++++++++++++++++++++++++++++++++++++')
+            print(json.dumps(msg))
+            print('+++++++++++++++++++++++++++++++++++++++')
             if msg['destination'] == DISPLAY_NAME:
                 # Message intended for me
                 if msg['type'] == 'control':
