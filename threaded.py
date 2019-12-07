@@ -27,11 +27,11 @@ def start_client():
         for service in service_matches:
             port = service["port"]
             host = service["host"]
-            display_name = service["description"]
+            client_name = service["description"]
 
             # Create the client socket
-            if not display_name in SOCKETS:
-                print("start_client: Connecting to \"%s\" port %s" % (display_name, port,))
+            if not client_name in SOCKETS:
+                print("start_client: Connecting to \"%s\" port %s" % (client_name, port,))
 
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 
@@ -42,20 +42,9 @@ def start_client():
                     continue
 
                 socket.settimeout(5.0)
-                SOCKETS[display_name] = socket
-                TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
+                add_connection(client_name, socket)
 
-                threading.Thread(
-                    target=receiver,
-                    args=[socket, display_name]
-                ).start()
-
-                threading.Thread(
-                    target=sender,
-                    args=[socket, display_name]
-                ).start()
-
-                print("start_client: Connected to {} on port {}.".format(display_name, port))
+                print("start_client: Connected to {} on port {}.".format(client_name, port))
 
 # ============================================================================= #
 
@@ -163,6 +152,7 @@ def sender(client_socket, name):
             pass
         time.sleep(1)
 
+
 def start_server(port):
     server_sock = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
     server_sock.bind(("", port))
@@ -186,23 +176,27 @@ def start_server(port):
         except Exception as e:
             continue
 
-        TOPOLOGY.add(frozenset([DISPLAY_NAME, client_name]))
-        SOCKETS[client_name] = client_socket
-        MESSAGES[client_name] = Queue()
+        add_connection(client_name, client_socket)
 
-        # Flood connection
+        # Flood connection message
         flood_control_message('connection', client_name)
 
-        threading.Thread(
-            target=receiver,
-            args=[client_socket, client_name]
 
-        ).start()
+def add_connection(client_name, client_socket):
+    TOPOLOGY.add(frozenset([DISPLAY_NAME, client_name]))
+    SOCKETS[client_name] = client_socket
+    MESSAGES[client_name] = Queue()
 
-        threading.Thread(
-            target=sender,
-            args=[client_socket, client_name]
-        ).start()
+    threading.Thread(
+        target=receiver,
+        args=[client_socket, client_name]
+
+    ).start()
+
+    threading.Thread(
+        target=sender,
+        args=[client_socket, client_name]
+    ).start()
 
 
 if __name__ == "__main__":
