@@ -48,21 +48,29 @@ def serialize_topology(TOPOLOGY):
     # serializeable_set = [[1,2], [2,3]]
     return [[i for i in edge] for edge in TOPOLOGY]
 
-def message():
-    return {
-        'source': DISPLAY_NAME,
+
+def control_message(event, point2, display_name):
+    msg = {
+        'source': display_name,
         'destination': '',
-        'value': {},
+        'data': {},
         'path': []
     }
-
-def control_message(event, point2):
-    msg = message()
     msg['type'] = 'control'
-    msg['value']['event'] = event
-    msg['value']['point1'] = DISPLAY_NAME
-    msg['value']['point2'] = point2
+    msg['data']['event'] = event
+    msg['data']['point1'] = display_name
+    msg['data']['point2'] = point2
     return msg
 
 
+def get_all_devices(topology, self_name):
+    devices = set([])
 
+    for x, y in topology:
+        devices.add(x)
+        devices.add(y)
+
+    try:
+        devices.remove(self_name)
+    except KeyError:
+        pass

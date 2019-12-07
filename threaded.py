@@ -1,16 +1,21 @@
-import bluetooth
 import copy
 import json
 import os
 import threading
 import time
+from queue import Queue
+
+import bluetooth
+
 import utils
+
 TOPOLOGY = set()
-CLIENT_SOCKETS = {}
-# MESSAGES = Queue()
+SOCKETS = {}
 MESSAGES = {}
 DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
-assert (DISPLAY_NAME is not None)
+
+assert DISPLAY_NAME is not None
+
 
 def start_client():
     global TOPOLOGY
@@ -25,7 +30,7 @@ def start_client():
             display_name = service["description"]
 
             # Create the client socket
-            if not display_name in CLIENT_SOCKETS:
+            if not display_name in SOCKETS:
                 print("start_client: Connecting to \"%s\" port %s" % (display_name, port,))
 
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
@@ -37,7 +42,7 @@ def start_client():
                     continue
 
                 socket.settimeout(5.0)
-                CLIENT_SOCKETS[display_name] = socket
+                SOCKETS[display_name] = socket
                 TOPOLOGY.add(frozenset([DISPLAY_NAME, display_name]))
 
                 threading.Thread(
@@ -54,23 +59,27 @@ def start_client():
 
 # ============================================================================= #
 
-def flood_control_message(msg):
-    for edge in TOPOLOGY:
-        points = list(edge)
 
-        destination = points[0] if points[0] != DISPLAY_NAME else points[1]
-
-        new_msg = copy.deepcopy(msg)
+def flood_control_message(event, target_user):
+    for destination in utils.get_all_devices(TOPOLOGY, DISPLAY_NAME):
+        new_msg = utils.control_message(event, target_user, DISPLAY_NAME)
         new_msg['destination'] = destination
-        new_msg['path'] = utils.get_path(new_msg['source'],new_msg['destination'],TOPOLOGY)
-        MESSAGES[new_msg['path'][0]].put(new_msg) 
+        send_message(new_msg)
+
+
+def send_message(msg_dict):
+    # To be used for data messages
+    # Appends the path, and puts it in the queue
+    msg_dict['path'] = utils.get_path(msg_dict['source'], msg_dict['destination'], TOPOLOGY)
+    next_hop = msg_dict['path'][0]
+    MESSAGES[next_hop].put(msg_dict)
 
 
 def update_topology(dictionary):
     global TOPOLOGY
 
     # If the entire message will be passed,
-    # access set dictionary to dictionary['value']
+    # access set dictionary to dictionary['data']
 
     if(dictionary['event'] == 'connection'):
         TOPOLOGY.add(frozenset([dictionary['point1'], dictionary['point2']]))
@@ -80,7 +89,7 @@ def update_topology(dictionary):
         raise "Control event not recognized"
 
 
-def receiver(client_socket, name):
+def receiver(client_socket, client_name):
     while True:
         try:
             data = client_socket.recv(1024)
@@ -92,27 +101,36 @@ def receiver(client_socket, name):
             msg = json.loads(data)
             if msg['destination'] == DISPLAY_NAME:
                 if msg['type'] == 'control':
-                    update_topology(msg)
+                    update_topology(msg['data'])
                 else:
-                    print(msg)
+                    # Data message intended for me
+                    print(msg['source'], ': ', msg['data'])
             else:
-                msg['path'].pop(0)
-                MESSAGES[DISPLAY_NAME] = msg
+                msg['path'].pop()
+                MESSAGES[msg['path'][0]] = msg
 
-                
         except Exception as e:
             print(e)
             continue
 
 
+def handle_disconnection(client_name):
+    # Remove from topology
+    # Flood disconnection
+    TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
+    del SOCKETS[client_name]
+    # TODO: Close the thread
+
+    flood_control_message('disconnection', client_name)
+
+
 def disconnection_detector():
     while True:
-        for client in CLIENT_SOCKETS:
+        for name, socket in SOCKETS.items():
             try:
-                CLIENT_SOCKETS[client].send("ping")
+                socket.send("ping")
             except Exception as e:
-                pass
-                # TODO: Handle disconnection
+                handle_disconnection(name)
         time.sleep(5)
 
 
@@ -142,19 +160,23 @@ def start_server(port):
 
         try:
             # First message will be the display name
-            name = client_socket.recv(1024) #FIXME
+            name = client_socket.recv(1024)
         except Exception as e:
             continue
 
-        print(name)
-
-        CLIENT_SOCKETS[name] = client_socket
+        SOCKETS[name] = client_socket
         MESSAGES[name] = Queue()
 
-        threading.Thread(target=receiver, args=[
-                         client_socket, name]).start()
-        threading.Thread(target=sender, args=[
-                         client_socket, name]).start()
+        threading.Thread(
+            target=receiver,
+            args=[client_socket, name]
+
+        ).start()
+
+        threading.Thread(
+            target=sender,
+            args=[client_socket, name]
+        ).start()
 
 
 if __name__ == "__main__":
@@ -164,3 +186,10 @@ if __name__ == "__main__":
     while True:
         time.sleep(5)
         start_client()
+
+# {
+#     'source': DISPLAY_NAME,
+#     'destination': '',
+#     'data': {},
+#     'path': []
+# }
