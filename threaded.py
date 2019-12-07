@@ -182,6 +182,7 @@ def start_server(port):
         try:
             # First message will be the display name
             client_name = client_socket.recv(1024)
+            client_name = client_name.decode('utf-8')
         except Exception as e:
             continue
 
