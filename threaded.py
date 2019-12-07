@@ -144,15 +144,12 @@ def disconnection_detector():
 def sender(client_socket, name):
     while True:
         try:
-            print("sender")
-            print(MESSAGES)
-            print(" --- 1 --- ")
-            print(MESSAGES[name].qsize())
-            print(" --- 2 --- ")
-            print("")
+            print("=================SENDER================")
+            print({k: v.queue for k, v in MESSAGES.items()})
             msg = MESSAGES[name].get(True, None)
-            print(msg)
-            print(" --- 3 --- ")
+            print(json.dumps(msg))
+            print("=================SENDER================")
+
             client_socket.send(json.dumps(msg))
         except Exception as e:
             print(e)
@@ -184,11 +181,13 @@ def start_server(port):
 
         add_connection(client_name, client_socket)
 
+        # Flood connection message
+        flood_control_message('connection', client_name)
+
         for message in utils.serialize_topology(TOPOLOGY):
             MESSAGES[client_name].put(message)
 
-        # Flood connection message
-        flood_control_message('connection', client_name)
+        
 
 
 def add_connection(client_name, client_socket):
