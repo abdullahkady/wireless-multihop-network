@@ -5,6 +5,7 @@ import time
 from queue import Queue
 
 import bluetooth
+import inquirer
 
 import utils
 from logger import SafeWriter
@@ -204,6 +205,32 @@ def add_connection(client_name, client_socket):
     ).start()
 
 
+def start_ui_client():
+    # Obviously not tested at all.
+    while True:
+        input('Press Enter to start sending a new message.')
+        available_devices = utils.get_all_devices(TOPOLOGY, DISPLAY_NAME)
+        if len(available_devices) == 0:
+            print('Sorry, there are no devices in the network at this time.')
+            continue
+
+        questions = [
+            inquirer.List(
+                'available_devices',
+                message="Choose a user to send to",
+                choices=available_devices,
+            )
+        ]
+        user_destination = inquirer.prompt(questions)['available_devices']
+        message_body = input('Enter message')
+        message = {
+            'source': DISPLAY_NAME,
+            'destination': user_destination,
+            'data': message_body
+        }
+        add_to_the_queue(message)
+
+
 if __name__ == "__main__":
     import atexit
     # On termination, the log file should be closed.
@@ -211,6 +238,7 @@ if __name__ == "__main__":
 
     threading.Thread(target=start_server, args=(1, )).start()
     threading.Thread(target=disconnection_detector).start()
+    threading.Thread(target=start_ui_client).start()
 
     while True:
         time.sleep(5)
