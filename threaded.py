@@ -1,4 +1,3 @@
-import copy
 import json
 import os
 import threading
@@ -8,7 +7,9 @@ from queue import Queue
 import bluetooth
 
 import utils
+from logger import SafeWriter
 
+LOGGER = SafeWriter("log.txt", "w")
 TOPOLOGY = set()
 SOCKETS = {}
 MESSAGES = {}
@@ -22,7 +23,7 @@ def start_client():
     service_matches = bluetooth.find_service(name="NetworksTest")
 
     if len(service_matches) == 0:
-        print("start_client: Couldn't find the NetworksTest service")
+        LOGGER.write("Couldn't find the NetworksTest service")
     else:
         for service in service_matches:
             port = service["port"]
@@ -31,7 +32,7 @@ def start_client():
 
             # Create the client socket
             if not client_name in SOCKETS:
-                print("start_client: Connecting to \"%s\" port %s" % (client_name, port,))
+                LOGGER.write('Connecting to "{}"'.format(client_name))
 
                 socket = bluetooth.BluetoothSocket(bluetooth.RFCOMM)
 
@@ -50,7 +51,7 @@ def start_client():
                 # Flood my own clients, think of the case where:
                 #  X - Y && W - Z :: Now Y-W, one edge won't know about the rest of the network.
                 flood_control_message('connection', client_name)
-                print("start_client: Connected to {} on port {}.".format(client_name, port))
+                LOGGER.write("Connected to {} on port {}.".format(client_name, port))
 
 # ============================================================================= #
 
@@ -94,14 +95,15 @@ def receiver(client_socket, client_name):
 
             # TODO: Handle routing
             msg = json.loads(data)
-            print('+++++++++++++++++RECEIVER+++++++++++++++++')
-            print(json.dumps(msg))
+            LOGGER.write('================RECIEVER===============')
+            LOGGER.write(json.dumps(msg))
+            LOGGER.write('+++++++++++++++++++++++++++++++++++++++')
             if msg['destination'] == DISPLAY_NAME:
                 # Message intended for me
                 if msg['type'] == 'control':
                     update_topology(msg['data'])
                 else:
-                    # Data message
+                    # Data message, should directly print to stdout
                     print(msg['source'], ': ', msg['data'])
             else:
                 msg['path'].pop(0)
@@ -140,14 +142,16 @@ def disconnection_detector():
 def sender(client_socket, name):
     while True:
         try:
-            print("=================SENDER================")
-            print({k: v.queue for k, v in MESSAGES.items()})
+            LOGGER.write('=================SENDER================')
+            LOGGER.write('Queue: ')
+            LOGGER.write(json.dumps({k: list(v.queue) for k, v in MESSAGES.items()}))
             msg = MESSAGES[name].get(True, None)
-            print(json.dumps(msg))
-
+            LOGGER.write('Picked message: ')
+            LOGGER.write(json.dumps(msg))
+            LOGGER.write('+++++++++++++++++++++++++++++++++++++++')
             client_socket.send(json.dumps(msg))
         except Exception as e:
-            print(e)
+            LOGGER.write(e)
             pass
         time.sleep(1)
 
@@ -159,11 +163,11 @@ def start_server(port):
 
     bluetooth.advertise_service(server_sock, "NetworksTest", description=DISPLAY_NAME)
 
-    print("start_server: Waiting for connections on RFCOMM channel %d" % port)
+    LOGGER.write("Waiting for connections on RFCOMM channel {}".format(port))
 
     while True:
         client_socket, client_info = server_sock.accept()
-        print("start_server: Accepted connection from ", client_info)
+        LOGGER.write('Accepted connection from: "{}"'.format(client_info))
 
         client_socket.settimeout(5.0)  # Will raise if 'recv' waits for more than 5s
 
@@ -201,16 +205,13 @@ def add_connection(client_name, client_socket):
 
 
 if __name__ == "__main__":
+    import atexit
+    # On termination, the log file should be closed.
+    atexit.register(lambda: LOGGER.close())
+
     threading.Thread(target=start_server, args=(1, )).start()
     threading.Thread(target=disconnection_detector).start()
 
     while True:
         time.sleep(5)
         start_client()
-
-# {
-#     'source': DISPLAY_NAME,
-#     'destination': '',
-#     'data': {},
-#     'path': []
-# }
