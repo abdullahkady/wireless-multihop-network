@@ -132,10 +132,11 @@ def handle_disconnection(client_name):
 
     try:
         TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
-        flood_control_message('disconnection', client_name)
     except KeyError:
         # Edge already removed, probably in update topology
         pass
+
+    flood_control_message('disconnection', client_name)
 
     del SOCKETS[client_name]
     # TODO: Close the thread
