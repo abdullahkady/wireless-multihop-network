@@ -133,7 +133,7 @@ def bfs(edge_list, source_node):
     visited = []
     queue.append(source_node)
     visited.append(source_node)
-    while not queue:
+    while queue:
         u = queue.pop(0)
         for x, y in edge_list:
             if x == u:
