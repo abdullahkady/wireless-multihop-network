@@ -108,7 +108,8 @@ def receiver(client_socket, client_name):
                     print(msg['source'], ': ', msg['data'])
             else:
                 msg['path'].pop(0)
-                MESSAGES[msg['path'][0]] = msg
+                next_hop = msg['path'][0]
+                MESSAGES[next_hop].put(msg)
         except Exception as e:
             if "timed out" in str(e):
                 continue
