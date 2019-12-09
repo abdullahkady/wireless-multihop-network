@@ -209,10 +209,10 @@ def add_connection(client_name, client_socket):
 def start_ui_client():
     # Obviously not tested at all.
     while True:
-        input('Press Enter to start sending a new message.')
+        input('Press Enter to start sending a new message.\n')
         available_devices = utils.get_all_devices(TOPOLOGY, DISPLAY_NAME)
         if len(available_devices) == 0:
-            print('Sorry, there are no devices in the network at this time.')
+            print('Sorry, there are no devices in the network at this time.\n')
             continue
 
         questions = [
@@ -223,7 +223,7 @@ def start_ui_client():
             )
         ]
         user_destination = inquirer.prompt(questions)['available_devices']
-        message_body = input('Enter message')
+        message_body = input('Enter message: ')
         message = {
             'source': DISPLAY_NAME,
             'type': 'data',
