@@ -196,8 +196,8 @@ def start_server(port):
 
 def add_connection(client_name, client_socket):
     TOPOLOGY.add(frozenset([DISPLAY_NAME, client_name]))
-    SOCKETS[client_name] = client_socket
     MESSAGES[client_name] = Queue()
+    SOCKETS[client_name] = client_socket
 
     threading.Thread(
         target=receiver,
