@@ -225,6 +225,7 @@ def start_ui_client():
         message_body = input('Enter message')
         message = {
             'source': DISPLAY_NAME,
+            'type': 'data',
             'destination': user_destination,
             'data': message_body
         }
