@@ -12,9 +12,10 @@ def get_path(source, destination, edge_set):
         topology[x] = topology.get(x, []) + [y]
         topology[y] = topology.get(y, []) + [x]
 
-    assert source in topology.keys(), 'Such source node doesn\'t exist'
-    assert destination in topology.keys(
-    ), 'Such destination node doesn\'t exist'
+    if source not in topology:
+        return []
+    if destination not in topology:
+        return []
 
     distances = {vertex: inf for vertex in topology.keys()}
     previous_vertices = {vertex: None for vertex in topology.keys()}

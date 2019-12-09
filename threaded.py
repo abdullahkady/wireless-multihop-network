@@ -61,16 +61,21 @@ def flood_control_message(event, target_user):
     for destination in utils.get_all_devices(TOPOLOGY, DISPLAY_NAME):
         new_msg = utils.control_message(event, target_user, DISPLAY_NAME)
         new_msg['destination'] = destination
-        add_to_the_queue(new_msg)
+        if not add_to_the_queue(new_msg):
+            LOGGER.write('Failed to deliver flood message:')
+            LOGGER.write('Event: "{}", destination: "{}"'.format(event, destination))
 
 
 def add_to_the_queue(msg_dict):
     # To be used for data messages
     # Appends the path, and puts it in the queue
-    msg_dict['path'] = utils.get_path(msg_dict['source'], msg_dict['destination'], TOPOLOGY)
-    msg_dict['path'].pop(0)
-    next_hop = msg_dict['path'][0]
-    MESSAGES[next_hop].put(msg_dict)
+    path = utils.get_path(msg_dict['source'], msg_dict['destination'], TOPOLOGY)
+    if not path:
+        return False
+    path.pop(0)  # Remove myself
+    msg_dict['path'] = path
+    MESSAGES[path[0]].put(msg_dict)
+    return True
 
 
 def update_topology(dictionary):
@@ -212,7 +217,7 @@ def start_ui_client():
         input('Press Enter to start sending a new message.\n')
         available_devices = utils.get_all_devices(TOPOLOGY, DISPLAY_NAME)
         if len(available_devices) == 0:
-            print('Sorry, there are no devices in the network at this time.\n')
+            print('Sorry, there are no devices in the network at this time.')
             continue
 
         questions = [
@@ -230,7 +235,9 @@ def start_ui_client():
             'destination': user_destination,
             'data': message_body
         }
-        add_to_the_queue(message)
+
+        if not add_to_the_queue(message):
+            print('Failed to deliver your message to {}.'.format(user_destination))
 
 
 if __name__ == "__main__":
