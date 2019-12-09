@@ -14,9 +14,6 @@ LOGGER = SafeWriter("log.txt", "w")
 TOPOLOGY = set()
 SOCKETS = {}
 MESSAGES = {}
-DISPLAY_NAME = os.environ['NETWORKS_USERNAME']
-
-assert DISPLAY_NAME is not None
 
 
 def start_client():
@@ -157,7 +154,7 @@ def handle_disconnection(client_name):
                 TOPOLOGY.remove(frozenset([x, y]))
             if not y in reachable_nodes:
                 TOPOLOGY.remove(frozenset([x, y]))
-            
+
     except KeyError:
         # Edge already removed, probably in update topology
         pass
@@ -277,6 +274,8 @@ def start_ui_client():
 
 
 if __name__ == "__main__":
+    DISPLAY_NAME = input('Please enter your username: ')
+
     import atexit
     # On termination, the log file should be closed.
     atexit.register(lambda: LOGGER.close())
