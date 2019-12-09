@@ -80,6 +80,8 @@ def update_topology(dictionary):
 
     # If the entire message will be passed,
     # access set dictionary to dictionary['data']
+    if DISPLAY_NAME in [dictionary['point1'], dictionary['point2']]:
+        return
 
     if(dictionary['event'] == 'connection'):
         TOPOLOGY.add(frozenset([dictionary['point1'], dictionary['point2']]))
@@ -152,6 +154,7 @@ def handle_disconnection(client_name):
     try:
         TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
         reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
+        LOGGER.write('REACHABLE:: ' + reachable_nodes) # TODO: Remove ?
         for x, y in TOPOLOGY:
             if not x in reachable_nodes:
                 TOPOLOGY.remove(frozenset([x, y]))
