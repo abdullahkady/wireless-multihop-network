@@ -126,12 +126,38 @@ def receiver(client_socket, client_name):
                 break
 
 
+def bfs(edge_list, source_node):
+    queue = []
+    visited = []
+    queue.append(source_node)
+    visited.append(source_node)
+    while not queue:
+        u = queue.pop(0)
+        for x, y in edge_list:
+            if x == u:
+                if not y in visited:
+                    queue.append(y)
+                    visited.append(y)
+            if y == u:
+                if not x in visited:
+                    queue.append(x)
+                    visited.append(x)
+    return visited
+
+
 def handle_disconnection(client_name):
     # Remove from topology
     # Flood disconnection
 
     try:
         TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
+        reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
+        for x, y in TOPOLOGY:
+            if not x in reachable_nodes:
+                TOPOLOGY.remove(frozenset(x, y))
+            if not y in reachable_nodes:
+                TOPOLOGY.remove(frozenset(x, y))
+            
     except KeyError:
         # Edge already removed, probably in update topology
         pass
