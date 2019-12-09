@@ -154,7 +154,7 @@ def handle_disconnection(client_name):
     try:
         TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
         reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
-        LOGGER.write('REACHABLE:: ' + reachable_nodes) # TODO: Remove ?
+        LOGGER.write('REACHABLE:: ' + str(reachable_nodes)) # TODO: Remove ?
         for x, y in TOPOLOGY:
             if not x in reachable_nodes:
                 TOPOLOGY.remove(frozenset([x, y]))
