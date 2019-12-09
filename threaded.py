@@ -87,7 +87,11 @@ def update_topology(dictionary):
     if(dictionary['event'] == 'connection'):
         TOPOLOGY.add(frozenset([dictionary['point1'], dictionary['point2']]))
     elif(dictionary['event'] == 'disconnection'):
-        TOPOLOGY.remove(frozenset([dictionary['point1'], dictionary['point2']]))
+        try:
+            TOPOLOGY.remove(frozenset([dictionary['point1'], dictionary['point2']]))
+        except KeyError:
+            # Edge already removed, probably in disconnection handler
+            return
     else:
         raise "Control event not recognized"
 
@@ -125,11 +129,16 @@ def receiver(client_socket, client_name):
 def handle_disconnection(client_name):
     # Remove from topology
     # Flood disconnection
-    TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
+
+    try:
+        TOPOLOGY.remove(frozenset([DISPLAY_NAME, client_name]))
+        flood_control_message('disconnection', client_name)
+    except KeyError:
+        # Edge already removed, probably in update topology
+        pass
+
     del SOCKETS[client_name]
     # TODO: Close the thread
-
-    flood_control_message('disconnection', client_name)
 
 
 def disconnection_detector():
