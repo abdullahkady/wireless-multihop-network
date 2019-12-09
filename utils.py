@@ -78,3 +78,11 @@ def serialize_topology(topology, destination, source):
     # For the first connection, generate control messages representing the
     # entire topology in terms of control messages.
     return [{**control_message('connection', x, y, source=source), 'destination': destination} for x, y in topology]
+
+
+def topology_to_list(topology):
+    # TOPOLOGY is a set of frozensets (hash-able sets): { {1,2}, {2,3} }
+    # Convert them back into 2d lists
+    # serializeable_set = [[1,2], [2,3]]
+    list_topology = [[i for i in edge] for edge in topology]
+    return '\n'.join('{} <=> {}'.format(x, y) for x, y in list_topology)

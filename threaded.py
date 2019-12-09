@@ -59,8 +59,8 @@ def flood_control_message(event, target_user):
         new_msg = utils.control_message(event, target_user, DISPLAY_NAME)
         new_msg['destination'] = destination
         if not add_to_the_queue(new_msg):
-            LOGGER.write('Failed to deliver flood message:')
-            LOGGER.write('Event: "{}", destination: "{}"'.format(event, destination))
+            details = 'Event: "{}", destination: "{}"'.format(event, destination)
+            LOGGER.write('Failed to deliver flood message:\n' + details)
 
 
 def add_to_the_queue(msg_dict):
@@ -91,6 +91,7 @@ def update_topology(dictionary):
             return
     else:
         raise "Control event not recognized"
+    LOGGER.write('Topology: \n{}'.format(utils.topology_to_list(TOPOLOGY)) + '\n')
 
 
 def receiver(client_socket, client_name):
@@ -102,9 +103,11 @@ def receiver(client_socket, client_name):
 
             # TODO: Handle routing
             msg = json.loads(data)
-            LOGGER.write('================RECIEVER===============')
-            LOGGER.write(json.dumps(msg))
-            LOGGER.write('+++++++++++++++++++++++++++++++++++++++')
+            logged_data = '================RECEIVER===============\n'
+            logged_data += json.dumps(msg) + '\n'
+            logged_data += '+++++++++++++++++++++++++++++++++++++++\n\n'
+            LOGGER.write(logged_data)
+
             if msg['destination'] == DISPLAY_NAME:
                 # Message intended for me
                 if msg['type'] == 'control':
@@ -154,6 +157,7 @@ def handle_disconnection(client_name):
                 TOPOLOGY.remove(frozenset([x, y]))
             if not y in reachable_nodes:
                 TOPOLOGY.remove(frozenset([x, y]))
+        LOGGER.write('Topology: \n{}'.format(utils.topology_to_list(TOPOLOGY)) + '\n')
 
     except KeyError:
         # Edge already removed, probably in update topology
@@ -182,13 +186,11 @@ def disconnection_detector():
 def sender(client_socket, name):
     while True:
         try:
-            LOGGER.write('=================SENDER================')
-            LOGGER.write('Queue: ')
-            LOGGER.write(json.dumps({k: list(v.queue) for k, v in MESSAGES.items()}))
             msg = MESSAGES[name].get(True, None)
-            LOGGER.write('Picked message: ')
-            LOGGER.write(json.dumps(msg))
-            LOGGER.write('+++++++++++++++++++++++++++++++++++++++')
+            logged_data = '=================SENDER================\n'
+            logged_data += json.dumps(msg) + '\n'
+            logged_data += '+++++++++++++++++++++++++++++++++++++++\n\n'
+            LOGGER.write(logged_data)
             client_socket.send(json.dumps(msg))
         except Exception as e:
             LOGGER.write(str(e))
@@ -229,13 +231,14 @@ def start_server(port):
 
 def add_connection(client_name, client_socket):
     TOPOLOGY.add(frozenset([DISPLAY_NAME, client_name]))
+    LOGGER.write('Topology: \n{}'.format(utils.topology_to_list(TOPOLOGY)) + '\n')
+
     MESSAGES[client_name] = Queue()
     SOCKETS[client_name] = client_socket
 
     threading.Thread(
         target=receiver,
         args=[client_socket, client_name]
-
     ).start()
 
     threading.Thread(

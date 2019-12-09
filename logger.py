@@ -16,8 +16,7 @@ class SafeWriter:
         Thread(name='SafeWriter', target=self.internal_writer).start()
 
     def write(self, data):
-        caller = sys._getframe().f_back.f_code.co_name
-        self.queue.put(caller + ' ::    ' + data + '\n')
+        self.queue.put(data + '\n')
 
     def internal_writer(self):
         while not self.finished:
