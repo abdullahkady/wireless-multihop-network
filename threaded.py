@@ -154,9 +154,9 @@ def handle_disconnection(client_name):
         reachable_nodes = bfs(TOPOLOGY, DISPLAY_NAME)
         for x, y in TOPOLOGY:
             if not x in reachable_nodes:
-                TOPOLOGY.remove(frozenset(x, y))
+                TOPOLOGY.remove(frozenset([x, y]))
             if not y in reachable_nodes:
-                TOPOLOGY.remove(frozenset(x, y))
+                TOPOLOGY.remove(frozenset([x, y]))
             
     except KeyError:
         # Edge already removed, probably in update topology
