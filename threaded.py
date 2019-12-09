@@ -158,7 +158,7 @@ def sender(client_socket, name):
             LOGGER.write('+++++++++++++++++++++++++++++++++++++++')
             client_socket.send(json.dumps(msg))
         except Exception as e:
-            LOGGER.write(e)
+            LOGGER.write(str(e))
             pass
         time.sleep(1)
 
