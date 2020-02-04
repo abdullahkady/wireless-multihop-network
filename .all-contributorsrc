@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "AmrMKayid",
+      "name": "Amr M. Kayid",
+      "avatar_url": "https://avatars1.githubusercontent.com/u/18689888?v=4",
+      "profile": "http://amrmkayid.github.io",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "wireless-multihop-network",
+  "projectOwner": "AbdullahKady",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
