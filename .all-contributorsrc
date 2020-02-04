@@ -1,0 +1,24 @@
+{
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "TheNavigat",
+      "name": "Amjad Mashaal",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/4323539?v=4",
+      "profile": "https://amjad.io",
+      "contributions": [
+        "code"
+      ]
+    }
+  ],
+  "contributorsPerLine": 7,
+  "projectName": "wireless-multihop-network",
+  "projectOwner": "AbdullahKady",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "skipCi": true
+}
