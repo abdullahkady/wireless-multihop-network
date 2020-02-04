@@ -1,4 +1,7 @@
 ## Wireless Multihop Network
+<!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+<!-- ALL-CONTRIBUTORS-BADGE:END -->
 
 An implementation of a network:
 - Wireless (Using Bluetooth)
@@ -43,3 +46,22 @@ sudo systemctl restart bluetooth
 ```
 
 You'll need to run the application as `sudo` for the correct permissions.
+
+## Contributors ✨
+
+Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/docs/en/emoji-key)):
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tr>
+    <td align="center"><a href="https://amjad.io"><img src="https://avatars3.githubusercontent.com/u/4323539?v=4" width="100px;" alt=""/><br /><sub><b>Amjad Mashaal</b></sub></a><br /><a href="https://github.com/AbdullahKady/wireless-multihop-network/commits?author=TheNavigat" title="Code">💻</a></td>
+  </tr>
+</table>
+
+<!-- markdownlint-enable -->
+<!-- prettier-ignore-end -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+This project follows the [all-contributors](https://github.com/all-contributors/all-contributors) specification. Contributions of any kind welcome!
